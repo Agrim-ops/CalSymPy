@@ -1,0 +1,19 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary and export files
+*.tmp
+CalSymPy_Report_*.txt
+CalSymPy_Report_*.csv

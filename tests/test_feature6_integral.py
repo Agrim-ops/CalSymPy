@@ -25,6 +25,10 @@ def test_model_a_double_integral_and_energy():
     assert pytest.approx(res['exact_average'], abs=0.1) == 46.47
     # Grid mean is close to exact continuous average (within 0.5 °C)
     assert abs(res['exact_average'] - res['grid_average']) < 0.5
+    # Trapezoid rule average is virtually identical to continuous integral (within 0.01 °C)
+    assert pytest.approx(res['trapz_average'], abs=0.01) == 46.46
+    assert abs(res['exact_average'] - res['trapz_average']) < 0.01
+    assert "cooler edge points" in res['gap_explanation']
 
     # Thermal energy for Model A is approximately 111.8 Joules
     assert pytest.approx(res['stored_energy_joules'], abs=1.0) == 111.8

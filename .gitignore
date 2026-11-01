@@ -1,19 +1,31 @@
-# Virtual Environment
+# Virtual Environments
 .venv/
+.venv*/
 env/
 venv/
 
 # Python cache files
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 
-# Pytest & Test artifacts
+# Pytest & Coverage
 .pytest_cache/
 .coverage
 htmlcov/
 
-# Temporary and export files
+# Scratch & Temporary scripts
+scratch_*.py
+scratch/
 *.tmp
+
+# Exported Reports and CSVs
 CalSymPy_Report_*.txt
 CalSymPy_Report_*.csv
+export_*.txt
+export_*.csv
+
+# Environment and Secret files
+.env
+.env.*

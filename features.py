@@ -381,6 +381,17 @@ def compute_thermal_load(model, params=None, material_key="FR-4", T_ambient=25.0
     T_grid = model.evaluate_T(X, Y, merged)
     grid_avg = float(np.mean(T_grid))
 
+    # Calculus Step 2b: Trapezoidal numerical integration of discrete grid
+    # np.trapezoid (NumPy 2.0+) or np.trapz (earlier NumPy)
+    trapz_fn = getattr(np, 'trapezoid', getattr(np, 'trapz', None))
+    trapz_integral = float(trapz_fn(trapz_fn(T_grid, ys, axis=0), xs))
+    trapz_avg = trapz_integral / area_cm2
+
+    gap_explanation = (
+        "the plain mean counts the cooler edge points as full cells, "
+        "while integration and the trapezoid rule count them as half cells."
+    )
+
     # Calculus Step 3: Stored thermal energy relative to ambient T_ambient
     # E = ρ * cp * thickness * ∬ (T - T_amb) dA
     mat = MATERIAL_PROPERTIES.get(material_key, MATERIAL_PROPERTIES["FR-4"])
@@ -404,9 +415,10 @@ def compute_thermal_load(model, params=None, material_key="FR-4", T_ambient=25.0
 
     summary_text = (
         f"Plate Area: {area_cm2:.1f} cm² ({area_m2:.6f} m²). "
-        f"Exact Average Temperature (via dblquad): {exact_avg:.2f} °C "
-        f"(Discrete {grid_resolution}x{grid_resolution} Grid Mean: {grid_avg:.2f} °C, "
-        f"Difference: {abs(exact_avg - grid_avg):.3f} °C). "
+        f"Exact Average Temperature (via dblquad): {exact_avg:.2f} °C, "
+        f"Discrete {grid_resolution}x{grid_resolution} Grid Mean: {grid_avg:.2f} °C, "
+        f"Trapezoid Rule Average: {trapz_avg:.2f} °C. "
+        f"Note on grid difference: {gap_explanation.capitalize()} "
         f"Stored Thermal Energy relative to {T_ambient:.1f} °C ambient: {stored_energy_joules:.2f} J "
         f"[{mat['name']}, {cp_note}, thickness {thickness_m * 1000:.1f} mm]."
     )
@@ -414,7 +426,9 @@ def compute_thermal_load(model, params=None, material_key="FR-4", T_ambient=25.0
     return {
         "exact_average": exact_avg,
         "grid_average": grid_avg,
+        "trapz_average": trapz_avg,
         "difference": abs(exact_avg - grid_avg),
+        "gap_explanation": gap_explanation,
         "integral_T": integral_T,
         "area_cm2": area_cm2,
         "area_m2": area_m2,

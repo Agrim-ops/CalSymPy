@@ -53,11 +53,12 @@ def run_all_self_tests():
         diff = abs(actual_val - expected_val)
         passed = diff <= tol
         status = "PASS" if passed else "FAIL"
+        fmt_precision = ".3f" if tol < 0.01 else ".2f"
         records.append({
             "Model": f"Model {model_id}",
             "Check Description": check_name,
             "Expected": expected_str,
-            "Actual": f"{actual_val:.2f}",
+            "Actual": f"{actual_val:{fmt_precision}}",
             "Difference": f"{diff:.4f}",
             "Status": status,
             "Notes": note,
@@ -180,9 +181,9 @@ def run_all_self_tests():
     mD = get_model('D')
     pD = mD.default_params
 
-    # Point (1.3, 1.3) ≈ 71.7 °C (exact 71.64 °C)
+    # Point (1.3, 1.3): exact theoretical value 71.644 °C (tolerance 1e-3)
     t_d_13 = float(mD.evaluate_T(1.3, 1.3, pD))
-    _record('D', "T(1.3, 1.3) Near Hotspot", "71.70 °C", t_d_13, 71.7, 0.15, "Near primary hotspot (exact 71.64 °C)")
+    _record('D', "T(1.3, 1.3) Near Hotspot", "71.644 °C", t_d_13, 71.644, 1e-3, "Near primary hotspot (exact analytical 71.644 °C)")
 
     # Summarize overall results
     passed_count = sum(1 for r in records if r["Status"] == "PASS")

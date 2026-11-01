@@ -92,6 +92,21 @@ def on_scenario_change(scenario_name, model_id):
         return presets['Heavy']
 
 
+def on_model_change(model_id):
+    """
+    Update slider values to the selected model's factory defaults.
+    """
+    model = get_model(model_id)
+    defaults = model.default_params
+    t_edge = defaults.get('T_edge', 25.0)
+    t0 = defaults.get('T0', defaults.get('T1', 60.0))
+    s = defaults.get('s', defaults.get('s1', 2.0))
+    cx = defaults.get('cx', defaults.get('cx1', 2.0))
+    cy = defaults.get('cy', defaults.get('cy1', 2.0))
+    L = defaults.get('L', 4.0)
+    return t_edge, t0, s, cx, cy, L
+
+
 def update_main_views(model_id, t_edge, t0, s, cx, cy, L, material_choice, lookup_x, lookup_y):
     """
     Reactive updater for Overview, Risk, Calculus Checks, Heat Load, and Heat Flow tabs.
@@ -178,9 +193,12 @@ def update_main_views(model_id, t_edge, t0, s, cx, cy, L, material_choice, looku
     load_report = (
         f"### Double Integral Thermal Energy Analysis (scipy.integrate.dblquad)\n\n"
         f"- **Plate Area**: {load['area_cm2']:.1f} cm² ({load['area_m2']:.6f} m²)\n"
-        f"- **Exact Continuous Average Temperature**: **{load['exact_average']:.2f} °C**  \n"
+        f"- **Exact Continuous Average Temperature (scipy.integrate.dblquad)**: **{load['exact_average']:.2f} °C**  \n"
         f"  *Evaluated via $T_{{\\text{{avg}}}} = \\frac{{1}}{{\\text{{Area}}}} \\iint_R T(x, y)\\,dA$*\n"
-        f"- **Discrete Grid Mean (81x81)**: {load['grid_average']:.2f} °C (Difference: {load['difference']:.4f} °C)\n"
+        f"- **Discrete Grid Mean (81x81)**: {load['grid_average']:.2f} °C\n"
+        f"- **Trapezoid-Rule Grid Average (np.trapezoid)**: **{load['trapz_average']:.2f} °C**\n\n"
+        f"**Explanation of the gap**:\n"
+        f"The plain mean counts the cooler edge points as full cells, while integration and the trapezoid rule count them as half cells.\n\n"
         f"- **Selected Material**: {load['material_name']}\n"
         f"- **Density ρ**: {load['rho']} kg/m³ | **Thickness**: {load['thickness_mm']:.1f} mm\n"
         f"- **Specific Heat Capacity cp**: {load['cp']} J/(kg·K) " + ("*(approximate, typical range 1000–1200)*" if load['cp_approx'] else "") + "\n"
@@ -474,6 +492,13 @@ def build_app():
             heatload_md,
             stream_plot, div_plot,
         ]
+
+        # Model dropdown updates sliders to model defaults
+        model_dropdown.change(
+            fn=on_model_change,
+            inputs=[model_dropdown],
+            outputs=[t_edge_slider, t0_slider, s_slider, cx_slider, cy_slider, L_slider],
+        )
 
         # Scenario dropdown updates T0 slider
         scenario_dropdown.change(

@@ -23,9 +23,8 @@ def test_model_d_near_hotspot():
     model_d = get_model('D')
     res_13 = point_lookup(model_d, 1.3, 1.3)
 
-    # Expected value from specification: about 71.7 °C (exact SymPy value 71.644 °C)
-    assert pytest.approx(res_13['T'], abs=0.1) == 71.7
-    assert pytest.approx(res_13['T'], abs=0.01) == 71.64
+    # Expected value: exact SymPy value 71.644 °C with tolerance 1e-3
+    assert pytest.approx(res_13['T'], abs=1e-3) == 71.644
 
 
 def test_model_d_centre_saddle_point():
@@ -97,4 +96,50 @@ def test_model_d_two_equal_maxima():
     assert p2['D'] > 0
     assert p2['Txx'] < 0
     assert p2['classification'] == "True Maximum"
+
+
+def test_model_d_exact_calculus_values_at_saddle_and_peaks():
+    """
+    Verify exact calculus derivatives for Model D:
+    1. Saddle at (2, 2): T=63.34, Txx=-7.50, Tyy=-7.50, Txy=43.62, D=-1846.6.
+    2. Each peak (about 1.267, 1.267 and 2.733, 2.733):
+       T=71.69, Txx=-53.70, Tyy=-53.70, Txy=8.56, D=2810.45.
+    Tolerance 0.01 (D tolerance 0.1).
+    """
+    model_d = get_model('D')
+    pD = model_d.default_params
+
+    # 1. Saddle point at (2, 2)
+    saddle = point_lookup(model_d, 2.0, 2.0, pD)
+    assert pytest.approx(saddle['T'], abs=0.01) == 63.34
+    assert pytest.approx(saddle['Txx'], abs=0.01) == -7.50
+    assert pytest.approx(saddle['Tyy'], abs=0.01) == -7.50
+    assert pytest.approx(saddle['Txy'], abs=0.01) == 43.62
+    D_saddle = saddle['Txx'] * saddle['Tyy'] - saddle['Txy']**2
+    assert pytest.approx(D_saddle, abs=0.1) == -1846.6
+
+    # 2. Peaks at (1.267, 1.267) and (2.733, 2.733)
+    hottest = find_hottest_points(model_d, pD)
+    assert len(hottest['peaks']) == 2
+    peaks = sorted(hottest['peaks'], key=lambda p: p['x'])
+    p1, p2 = peaks[0], peaks[1]
+
+    # Peak 1 (near 1.267, 1.267)
+    assert pytest.approx(p1['x'], abs=0.01) == 1.267
+    assert pytest.approx(p1['y'], abs=0.01) == 1.267
+    assert pytest.approx(p1['T'], abs=0.01) == 71.69
+    assert pytest.approx(p1['Txx'], abs=0.01) == -53.70
+    assert pytest.approx(p1['Tyy'], abs=0.01) == -53.70
+    assert pytest.approx(p1['Txy'], abs=0.01) == 8.56
+    assert pytest.approx(p1['D'], abs=0.01) == 2810.45
+
+    # Peak 2 (near 2.733, 2.733)
+    assert pytest.approx(p2['x'], abs=0.01) == 2.733
+    assert pytest.approx(p2['y'], abs=0.01) == 2.733
+    assert pytest.approx(p2['T'], abs=0.01) == 71.69
+    assert pytest.approx(p2['Txx'], abs=0.01) == -53.70
+    assert pytest.approx(p2['Tyy'], abs=0.01) == -53.70
+    assert pytest.approx(p2['Txy'], abs=0.01) == 8.56
+    assert pytest.approx(p2['D'], abs=0.01) == 2810.45
+
 

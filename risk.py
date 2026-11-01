@@ -13,6 +13,12 @@
 # - MODERATE (70.0 °C <= T <= 90.0 °C): Warm operating conditions with reduced margin.
 # - HIGH (> 90.0 °C): Dangerously hot, risking thermal shutdown or permanent silicon damage.
 #
+# Note on Threshold Origins:
+# The 70 °C and 90 °C cutoffs are our project's chosen temperature bands, informed by
+# published commercial processor junction thermal limits (TjMax ~ 95–105 °C, staying ~15 °C below
+# for safe operation). They are engineering design heuristics chosen for this project, NOT an
+# official industry or regulatory standard.
+#
 # Every assessment provides two perspectives:
 # 1. A rigorous technical engineering statement citing TjMax margins.
 # 2. A plain-English sentence suitable for non-technical stakeholders (e.g. HR or management).

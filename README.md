@@ -13,7 +13,7 @@ pinned: false
 # CalSymPy — Flat Plate Thermal Calculus Analysis
 **Team 4, Delta-T | MAT 112 Engineering Mathematics & Python**
 
-CalSymPy is an educational analytical Python tool developed by Team 4 (Delta-T) for first-year engineering students and faculty. It models steady-state temperature distributions $T(x, y)$ on a flat square plate (side length $L = 4\text{ cm}$), analyzes the scalar and vector fields using multivariable calculus, and provides risk-based cooling recommendations.
+CalSymPy is an educational analytical Python tool developed by Team 4 (Delta-T) for first-year engineering students and faculty. It models steady-state temperature distributions $T(x, y)$ on a flat square plate (side length $L = 4\text{ cm}$), analyzes scalar and vector fields using multivariable calculus, and provides risk-based cooling recommendations.
 
 ---
 
@@ -65,7 +65,7 @@ CalSymPy adheres strictly to the MAT 112 syllabus:
    *Defaults*: $T_{\text{edge}} = 40^\circ\text{C}, T_0 = 30^\circ\text{C}, L = 4.0\text{ cm}$. Tied peak corners at $(0, 0)$ and $(4, 4)$ at $70.0^\circ\text{C}$ ($D > 0, T_{xx} < 0$). Center $(2, 2)$ is a saddle point ($D < 0$).
 5. **Model D (Two Hotspots)**:
    $$T(x, y) = 25 + 45\exp\left(-\frac{(x - 1.2)^2 + (y - 1.2)^2}{1.5}\right) + 45\exp\left(-\frac{(x - 2.8)^2 + (y - 2.8)^2}{1.5}\right)$$
-   *Defaults*: Peak near $(1.27, 1.27)$ at $\approx 71.7^\circ\text{C}$.
+   *Defaults*: Two symmetric peaks near $(1.267, 1.267)$ and $(2.733, 2.733)$ reaching $71.69^\circ\text{C}$ ($D = 2810.5 > 0, T_{xx} = -53.71 < 0$). Interior saddle point at $(2.0, 2.0)$ reaching $63.34^\circ\text{C}$ ($D = -1846.6 < 0$).
 
 ---
 
@@ -90,37 +90,60 @@ All partial derivatives ($T_x, T_y, T_{xx}, T_{yy}, T_{xy}$) are evaluated symbo
 
 ---
 
-## 5. Quickstart & Testing
+## 5. Deployment & Execution Options
 
-### Installation
+### Option A: Run Locally
 ```bash
+# 1. Clone repository and navigate to folder
+git clone https://github.com/Agrim-ops/CalSymPy.git
+cd CalSymPy
+
+# 2. Create virtual environment and install pinned dependencies
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-### Running Tests
-```bash
-pytest -v
-```
-
-### Running the Gradio App
-```bash
+# 3. Launch interactive Gradio web application
 python app.py
 ```
 Open your browser at the displayed local URL (default: `http://127.0.0.1:7860`).
 
+### Option B: Run on Google Colab
+Launch the self-contained backup notebook directly on Google Colab:
+- Open [`notebooks/colab_backup.ipynb`](notebooks/colab_backup.ipynb) in Colab.
+- Click `Runtime` -> `Restart and Run All` to execute the full calculus pipeline top-to-bottom.
+
+### Option C: Live Web Demo
+- **Hugging Face Spaces**: [https://huggingface.co/spaces/YOUR_USERNAME/CalSymPy](https://huggingface.co/spaces/YOUR_USERNAME/CalSymPy) *(Link placeholder — ready for one-click Space deployment)*.
+
 ---
 
-## 6. Project Files
+## 6. Verification & Test Suite
+
+CalSymPy includes comprehensive automated verification:
+- **37 / 37 Theoretical Self-Tests Passed**: Independently verifies all theoretical benchmark values at factory defaults.
+- **44 / 44 Unit Tests Passed (`pytest -v`)**: Comprehensive test suite covering all calculus features, risk bounds, integrals, and export functionality.
+
+To execute the test suite:
+```bash
+pytest -v
+```
+
+---
+
+## 7. Project Files
 
 - `app.py`: Gradio user interface with 10 analytical tabs.
 - `models.py`: Analytical models with SymPy symbolic pre-compilation and caching.
 - `calculus.py`: MAT 112 calculus functions (gradient, Hessian, discriminant test, Laplacian, divergence).
 - `features.py`: Peak search, point lookup, cross-model comparison, thermal load, gradient descent, and Lagrange multipliers.
 - `risk.py`: Stakeholder and technical risk assessment rules.
-- `selftest.py`: Live verification of theoretical known values at factory default settings.
+- `selftest.py`: Live verification of theoretical known values at factory default settings (37 checks).
 - `benchmark.py`: Pure SymPy substitution vs lambdified NumPy speedup timer.
-- `report.py`: Plain-text and CSV report generator.
+- `report.py`: Plain-text and CSV report generator using pandas.
 - `plots.py`: Matplotlib plotting routines (overview, streamlines, divergence, comparisons, trajectories).
 - `notebooks/colab_backup.ipynb`: Backup runnable demo notebook.
+- `docs/PSEUDOCODE.md`: Step-by-step plain-English algorithms ($\le 15$ lines each, zero Python syntax).
+- `docs/EXPLAINED.md`: Architectural breakdown of all Python files and calculus concepts.
+- `docs/VIVA_QA.md`: 40 faculty viva questions and 2–3 sentence answers.
+- `docs/CODE_WALKTHROUGH.md`: 10-minute presentation demo script.

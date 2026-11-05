@@ -40,3 +40,13 @@ def test_selftest_evaluates_at_defaults_independently():
     a_peak_record = next(r for r in results['records'] if r['Check Description'] == "T(2, 2) Hotspot Peak")
     assert a_peak_record['Actual'] == "85.00"
     assert a_peak_record['Status'] == "PASS"
+
+
+def test_selftest_total_count_and_model_d_checks():
+    """Verify total checks count is 37 and Model D saddle and peak are verified."""
+    results = run_all_self_tests()
+    assert results['total'] == 37
+    descs = [r['Check Description'] for r in results['records']]
+    assert "Saddle T(2, 2)" in descs
+    assert "Saddle D(2, 2)" in descs
+    assert "Peak T(1.267, 1.267)" in descs

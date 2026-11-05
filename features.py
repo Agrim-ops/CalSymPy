@@ -205,9 +205,13 @@ def point_lookup(model, x, y, params=None, k=0.29):
     laplacian = txx + tyy
 
     # Heat flux vector by Fourier's law: F = -k * ∇T (heat flows hot -> cold)
-    flux_x = -float(k) * tx
-    flux_y = -float(k) * ty
-    flux_mag = float(k) * grad_mag
+    # Convert gradient from °C/cm to °C/m by multiplying by 100 cm/m so flux is in W/m²
+    grad_x_m = tx * 100.0
+    grad_y_m = ty * 100.0
+    grad_mag_m = grad_mag * 100.0
+    flux_x = -float(k) * grad_x_m
+    flux_y = -float(k) * grad_y_m
+    flux_mag = float(k) * grad_mag_m
 
     summary_text = (
         f"At position ({px:.3f}, {py:.3f}) cm: Temperature T = {T_val:.2f} °C. "

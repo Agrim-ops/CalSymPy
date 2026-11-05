@@ -74,3 +74,27 @@ def test_streamlines_and_divergence_plots():
     assert fig_div is not None
     assert isinstance(fig_div, plt.Figure)
     plt.close(fig_div)
+
+
+def test_flux_and_divergence_units_scaling():
+    """
+    Verify consistent SI units:
+    - Coordinates are in cm.
+    - Gradient scaled by 100 cm/m to °C/m gives flux F = -k * grad T in W/m².
+    - Laplacian scaled by 10,000 (cm/m)² gives divergence div F = -k * ∇²T in W/m³.
+    """
+    from features import point_lookup
+    model_a = get_model('A')
+    k = 0.29
+
+    # Model A at (3, 2): Tx = -36.3918 °C/cm => Tx_m = -3639.18 °C/m
+    # Heat flux Fx = -0.29 * (-3639.18) ≈ 1055.36 W/m²
+    pt = point_lookup(model_a, 3.0, 2.0, k=k)
+    assert abs(pt['flux_x'] - 1055.36) < 1.0
+    assert "W/m²" in pt['summary_text']
+
+    # Model A at (2, 2): Laplacian = -120 °C/cm² => -1,200,000 °C/m²
+    # div F = -0.29 * (-1,200,000) = 348,000 W/m³
+    txx, tyy, _ = [float(v) for v in model_a.evaluate_hessian(2.0, 2.0)]
+    div_val = compute_flux_divergence(txx, tyy, k)
+    assert abs(div_val - 348000.0) < 10.0

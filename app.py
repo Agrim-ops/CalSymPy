@@ -52,7 +52,7 @@ from features import (
 from risk import classify_risk
 from selftest import run_all_self_tests
 from benchmark import run_benchmark
-from report import generate_text_report, generate_csv_report
+from report import generate_text_report, generate_csv_report, generate_grid_csv
 from plots import (
     plot_overview,
     plot_heat_flux_streamlines,
@@ -224,9 +224,10 @@ def update_comparison_tab():
     return fig_comp, df
 
 
-def run_gradient_descent_action(sensor_x, sensor_y, init_cx, init_cy, step_size):
-    """Execute gradient descent source relocation and plot path."""
+def run_gradient_descent_action(sensor_x, sensor_y, init_cx, init_cy, step_size, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0, L=4.0):
+    """Execute gradient descent source relocation and plot path with active parameters."""
     model_a = get_model('A')
+    params = {'T_edge': float(t_edge), 'T0': float(t0), 's': float(s), 'cx': float(cx), 'cy': float(cy), 'L': float(L)}
     res = run_gradient_descent_optimization(
         model=model_a,
         sensor_pos=(float(sensor_x), float(sensor_y)),
@@ -235,7 +236,7 @@ def run_gradient_descent_action(sensor_x, sensor_y, init_cx, init_cy, step_size)
         step_size=float(step_size),
         max_iters=50,
     )
-    fig_gd = plot_optimization_trajectory(model_a, res['sensor_pos'], res['trajectory'])
+    fig_gd = plot_optimization_trajectory(model_a, res['sensor_pos'], res['trajectory'], params=params)
     plt.close(fig_gd)
     text = (
         f"### Gradient Descent Results\n\n"
@@ -248,16 +249,17 @@ def run_gradient_descent_action(sensor_x, sensor_y, init_cx, init_cy, step_size)
     return fig_gd, text
 
 
-def run_lagrange_action(rail_a, rail_b, rail_c):
-    """Solve constrained extrema along rail ax + by = c and plot."""
+def run_lagrange_action(rail_a, rail_b, rail_c, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0, L=4.0):
+    """Solve constrained extrema along rail ax + by = c and plot with active parameters."""
     model_a = get_model('A')
+    params = {'T_edge': float(t_edge), 'T0': float(t0), 's': float(s), 'cx': float(cx), 'cy': float(cy), 'L': float(L)}
     res = solve_lagrange_rail_constraint(
         model=model_a,
         a=float(rail_a),
         b=float(rail_b),
         c=float(rail_c),
     )
-    fig_lm = plot_lagrange_rail(model_a, float(rail_a), float(rail_b), float(rail_c), res['best_analytical'])
+    fig_lm = plot_lagrange_rail(model_a, float(rail_a), float(rail_b), float(rail_c), res['best_analytical'], params=params)
     plt.close(fig_lm)
     text = (
         f"### Lagrange Multipliers Rail Constrained Extrema\n\n"
@@ -313,7 +315,9 @@ def export_report_action(model_id, t_edge, t0, s, cx, cy, L, material_choice, fo
         'L': float(L),
     }
 
-    if "CSV" in format_choice:
+    if "Grid" in format_choice:
+        file_path = generate_grid_csv(model, params, grid_res=41)
+    elif "CSV" in format_choice:
         file_path = generate_csv_report(model, params, material_key=mat_key)
     else:
         file_path = generate_text_report(model, params, material_key=mat_key)
@@ -474,7 +478,7 @@ def build_app():
                     # Tab 10: Export
                     with gr.Tab("Export"):
                         gr.Markdown("### Export Analytical Calculus Report")
-                        export_fmt = gr.Radio(choices=["Text Document (.txt)", "CSV Spreadsheet (.csv)"], value="Text Document (.txt)", label="Export Format")
+                        export_fmt = gr.Radio(choices=["Text Document (.txt)", "CSV Spreadsheet (.csv)", "Coordinate Grid Data (.csv)"], value="Text Document (.txt)", label="Export Format")
                         export_btn = gr.Button("Generate and Download Report", variant="primary")
                         export_status = gr.Markdown()
                         export_file = gr.File(label="Download Generated Report")
@@ -517,8 +521,16 @@ def build_app():
 
         # Tab button actions
         compare_btn.click(fn=update_comparison_tab, inputs=[], outputs=[compare_plot, compare_table])
-        gd_btn.click(fn=run_gradient_descent_action, inputs=[sensor_x, sensor_y, init_cx, init_cy, step_size], outputs=[gd_plot, gd_md])
-        lm_btn.click(fn=run_lagrange_action, inputs=[rail_a, rail_b, rail_c], outputs=[lm_plot, lm_md])
+        gd_btn.click(
+            fn=run_gradient_descent_action,
+            inputs=[sensor_x, sensor_y, init_cx, init_cy, step_size, t_edge_slider, t0_slider, s_slider, cx_slider, cy_slider, L_slider],
+            outputs=[gd_plot, gd_md]
+        )
+        lm_btn.click(
+            fn=run_lagrange_action,
+            inputs=[rail_a, rail_b, rail_c, t_edge_slider, t0_slider, s_slider, cx_slider, cy_slider, L_slider],
+            outputs=[lm_plot, lm_md]
+        )
         selftest_btn.click(fn=run_selftest_tab, inputs=[], outputs=[selftest_summary, selftest_table])
         bench_btn.click(fn=run_benchmark_action, inputs=[bench_grid_slider], outputs=[bench_md])
         export_btn.click(

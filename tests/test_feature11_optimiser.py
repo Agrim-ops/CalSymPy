@@ -78,3 +78,25 @@ def test_optimiser_plots():
     fig_lm = plot_lagrange_rail(model_a, 1.0, 1.0, 4.0, res_lm['best_analytical'])
     assert isinstance(fig_lm, plt.Figure)
     plt.close(fig_lm)
+
+
+def test_optimiser_plots_with_custom_params_and_vertical_rail():
+    """Verify that plots accept custom slider params and vertical rails (b=0) render cleanly."""
+    model_a = get_model('A')
+    res_gd = run_gradient_descent_optimization(model_a)
+    custom_params = {'T_edge': 20.0, 'T0': 50.0, 's': 2.0, 'cx': 2.0, 'cy': 2.0, 'L': 4.0}
+
+    # Custom params on trajectory plot
+    fig_gd = plot_optimization_trajectory(
+        model_a, res_gd['sensor_pos'], res_gd['trajectory'], params=custom_params
+    )
+    assert isinstance(fig_gd, plt.Figure)
+    plt.close(fig_gd)
+
+    # Vertical rail (b=0, 1*x + 0*y = 2 => x=2)
+    dummy_opt = {'x': 2.0, 'y': 2.0, 'T': 85.0}
+    fig_vert = plot_lagrange_rail(
+        model_a, a=1.0, b=0.0, c=2.0, optimal_pt=dummy_opt, params=custom_params
+    )
+    assert isinstance(fig_vert, plt.Figure)
+    plt.close(fig_vert)

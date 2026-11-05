@@ -7,15 +7,18 @@
 # 1. Model name, formula, and active parameter values.
 # 2. Hottest point analysis and second derivative test (D-test) classification.
 # 3. Semiconductor thermal risk assessment (plain-English and technical).
-# 4. Double integral exact average temperature and stored thermal energy (J).
+# 4. Double integral exact average temperature, trapezoid average, and stored energy (J).
 # 5. Theoretical self-test verification matrix results (PASS/FAIL).
+# 6. Coordinate grid export of temperature and gradient vector fields.
 #
-# The exported file is downloadable directly from Gradio via gr.File.
+# Educational Purpose (MAT 112 & Python):
+# Uses pandas DataFrame for clean tabular export and CSV generation.
 # ==============================================================================
 
 import os
-import csv
 import tempfile
+import numpy as np
+import pandas as pd
 from models import get_model
 from features import find_hottest_points, compute_thermal_load
 from risk import classify_risk
@@ -50,6 +53,10 @@ def generate_text_report(model, params=None, material_key="FR-4", output_path=No
     if output_path is None:
         temp_dir = tempfile.gettempdir()
         output_path = os.path.join(temp_dir, f"CalSymPy_Report_{model.model_id}.txt")
+
+    # Format gap explanation preserving the rest of the sentence capitalization
+    gap_exp = load.get('gap_explanation', '')
+    gap_formatted = (gap_exp[0].upper() + gap_exp[1:]) if gap_exp else ""
 
     lines = [
         "=" * 78,
@@ -97,7 +104,7 @@ def generate_text_report(model, params=None, material_key="FR-4", output_path=No
         f"   - Exact Average Temperature (Continuous Integral): {load['exact_average']:.2f} °C",
         f"   - Discrete Grid Mean: {load['grid_average']:.2f} °C",
         f"   - Trapezoid-Rule Grid Average (np.trapezoid): {load['trapz_average']:.2f} °C",
-        f"   - Explanation of Gap: {load['gap_explanation'].capitalize()}",
+        f"   - Explanation of Gap: {gap_formatted}",
         f"   - Material: {load['material_name']}",
         f"   - Stored Thermal Energy relative to {load['T_ambient']:.1f} °C ambient: {load['stored_energy_joules']:.2f} Joules",
         f"   - Material Specific Heat: cp = {load['cp']} J/(kg·K) " + ("(Approximate)" if load['cp_approx'] else ""),
@@ -131,7 +138,10 @@ def generate_text_report(model, params=None, material_key="FR-4", output_path=No
 
 def generate_csv_report(model, params=None, material_key="FR-4", output_path=None):
     """
-    Generate a structured CSV report for spreadsheet logging.
+    Generate a structured CSV report using a pandas DataFrame.
+    Dynamically loops over model.param_keys to handle all models cleanly.
+    
+    Columns: Section, Metric, Value, Units
     
     Returns:
         str: Absolute path to the generated CSV file.
@@ -151,37 +161,95 @@ def generate_csv_report(model, params=None, material_key="FR-4", output_path=Non
         temp_dir = tempfile.gettempdir()
         output_path = os.path.join(temp_dir, f"CalSymPy_Report_{model.model_id}.csv")
 
-    rows = [
-        ["Section", "Metric", "Value", "Units / Notes"],
-        ["Model", "Model ID", model.model_id, ""],
-        ["Model", "Model Name", model.name, ""],
-        ["Parameters", "L", merged.get('L', 4.0), "cm"],
-        ["Parameters", "T_edge", merged.get('T_edge', 25.0), "°C"],
-        ["Parameters", "T0", merged.get('T0', 60.0), "°C"],
-        ["Hottest Point", "Maximum Temperature", f"{max_t:.2f}", "°C"],
-        ["Hottest Point", "Peak X", f"{p0['x']:.2f}", "cm"],
-        ["Hottest Point", "Peak Y", f"{p0['y']:.2f}", "cm"],
-        ["Hessian D-Test", "Tx", f"{p0['Tx']:.4f}", "°C/cm"],
-        ["Hessian D-Test", "Ty", f"{p0['Ty']:.4f}", "°C/cm"],
-        ["Hessian D-Test", "Txx", f"{p0['Txx']:.4f}", ""],
-        ["Hessian D-Test", "Tyy", f"{p0['Tyy']:.4f}", ""],
-        ["Hessian D-Test", "Txy", f"{p0['Txy']:.4f}", ""],
-        ["Hessian D-Test", "Discriminant D", f"{p0['D']:.4f}", ""],
-        ["Hessian D-Test", "Classification", p0['classification'], ""],
-        ["Risk", "Risk Level", risk_info['level'], ""],
-        ["Risk", "Plain-English Assessment", risk_info['plain_english'], "For Non-Technical Stakeholders"],
-        ["Risk", "Technical Assessment", risk_info['technical'], "TjMax Margin"],
-        ["Thermal Load", "Exact Average Temperature", f"{load['exact_average']:.2f}", "°C (via dblquad)"],
-        ["Thermal Load", "Discrete Grid Mean", f"{load['grid_average']:.2f}", "°C"],
-        ["Thermal Load", "Stored Thermal Energy", f"{load['stored_energy_joules']:.2f}", "Joules"],
-        ["Thermal Load", "Material", load['material_name'], ""],
-        ["Self-Test", "Total Checks", selftest_res['total'], ""],
-        ["Self-Test", "Passed Checks", selftest_res['passed'], ""],
-        ["Self-Test", "Overall Status", "PASS" if selftest_res['all_passed'] else "FAIL", "Evaluated at Defaults"],
+    records = [
+        {"Section": "Model", "Metric": "Model ID", "Value": model.model_id, "Units": ""},
+        {"Section": "Model", "Metric": "Model Name", "Value": model.name, "Units": ""},
     ]
 
-    with open(output_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerows(rows)
+    # Dynamically log all active model parameters
+    param_units = {
+        'L': 'cm', 'T_edge': '°C', 'T0': '°C', 'T1': '°C', 'T2': '°C',
+        's': 'cm²', 's1': 'cm²', 's2': 'cm²',
+        'cx': 'cm', 'cy': 'cm', 'cx1': 'cm', 'cy1': 'cm', 'cx2': 'cm', 'cy2': 'cm'
+    }
+    for k in model.param_keys:
+        records.append({
+            "Section": "Parameters",
+            "Metric": k,
+            "Value": str(merged.get(k)),
+            "Units": param_units.get(k, "")
+        })
 
+    # Calculus metrics
+    records.extend([
+        {"Section": "Hottest Point", "Metric": "Maximum Temperature", "Value": f"{max_t:.2f}", "Units": "°C"},
+        {"Section": "Hottest Point", "Metric": "Peak X", "Value": f"{p0['x']:.2f}", "Units": "cm"},
+        {"Section": "Hottest Point", "Metric": "Peak Y", "Value": f"{p0['y']:.2f}", "Units": "cm"},
+        {"Section": "Hessian D-Test", "Metric": "Tx", "Value": f"{p0['Tx']:.4f}", "Units": "°C/cm"},
+        {"Section": "Hessian D-Test", "Metric": "Ty", "Value": f"{p0['Ty']:.4f}", "Units": "°C/cm"},
+        {"Section": "Hessian D-Test", "Metric": "Txx", "Value": f"{p0['Txx']:.4f}", "Units": ""},
+        {"Section": "Hessian D-Test", "Metric": "Tyy", "Value": f"{p0['Tyy']:.4f}", "Units": ""},
+        {"Section": "Hessian D-Test", "Metric": "Txy", "Value": f"{p0['Txy']:.4f}", "Units": ""},
+        {"Section": "Hessian D-Test", "Metric": "Discriminant D", "Value": f"{p0['D']:.4f}", "Units": ""},
+        {"Section": "Hessian D-Test", "Metric": "Classification", "Value": p0['classification'], "Units": ""},
+        {"Section": "Risk", "Metric": "Risk Level", "Value": risk_info['level'], "Units": ""},
+        {"Section": "Risk", "Metric": "Plain-English Assessment", "Value": risk_info['plain_english'], "Units": "For Stakeholders"},
+        {"Section": "Risk", "Metric": "Technical Assessment", "Value": risk_info['technical'], "Units": "TjMax Margin"},
+        {"Section": "Thermal Load", "Metric": "Exact Average Temperature", "Value": f"{load['exact_average']:.2f}", "Units": "°C (via dblquad)"},
+        {"Section": "Thermal Load", "Metric": "Discrete Grid Mean", "Value": f"{load['grid_average']:.2f}", "Units": "°C"},
+        {"Section": "Thermal Load", "Metric": "Trapezoid Grid Average", "Value": f"{load['trapz_average']:.2f}", "Units": "°C (np.trapezoid)"},
+        {"Section": "Thermal Load", "Metric": "Stored Thermal Energy", "Value": f"{load['stored_energy_joules']:.2f}", "Units": "Joules"},
+        {"Section": "Thermal Load", "Metric": "Material", "Value": load['material_name'], "Units": ""},
+        {"Section": "Self-Test", "Metric": "Total Checks", "Value": str(selftest_res['total']), "Units": ""},
+        {"Section": "Self-Test", "Metric": "Passed Checks", "Value": str(selftest_res['passed']), "Units": ""},
+        {"Section": "Self-Test", "Metric": "Overall Status", "Value": "PASS" if selftest_res['all_passed'] else "FAIL", "Units": "Evaluated at Defaults"},
+    ])
+
+    # Rebuild using a pandas DataFrame
+    df = pd.DataFrame(records, columns=["Section", "Metric", "Value", "Units"])
+    df.to_csv(output_path, index=False, encoding="utf-8")
+    return output_path
+
+
+def generate_grid_csv(model, params=None, grid_res=41, output_path=None):
+    """
+    Export discrete plate coordinate grid data (x, y, T, Tx, Ty) to a CSV file
+    using a pandas DataFrame.
+    
+    Parameters:
+        model: ThermalModel instance
+        params (dict, optional): Parameter dictionary
+        grid_res (int): Grid resolution along each axis (default 41x41 = 1681 points)
+        output_path (str, optional): Target file path
+        
+    Returns:
+        str: Absolute path to the generated CSV file.
+    """
+    merged = model.default_params.copy()
+    if params:
+        merged.update(params)
+
+    L = float(merged.get('L', 4.0))
+    xs = np.linspace(0.0, L, grid_res)
+    ys = np.linspace(0.0, L, grid_res)
+    X, Y = np.meshgrid(xs, ys)
+
+    # Vectorized numerical evaluation via compiled NumPy functions
+    T_grid = model.evaluate_T(X, Y, merged)
+    Tx_grid, Ty_grid = model.evaluate_gradient(X, Y, merged)
+
+    data = {
+        'x': np.round(X.ravel(), 4),
+        'y': np.round(Y.ravel(), 4),
+        'T': np.round(T_grid.ravel(), 4),
+        'Tx': np.round(Tx_grid.ravel(), 4),
+        'Ty': np.round(Ty_grid.ravel(), 4),
+    }
+    df = pd.DataFrame(data)
+
+    if output_path is None:
+        temp_dir = tempfile.gettempdir()
+        output_path = os.path.join(temp_dir, f"CalSymPy_Grid_{model.model_id}.csv")
+
+    df.to_csv(output_path, index=False, encoding="utf-8")
     return output_path

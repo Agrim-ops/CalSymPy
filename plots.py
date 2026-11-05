@@ -19,8 +19,14 @@
 # ==============================================================================
 
 import numpy as np
+import sys
 import matplotlib
-matplotlib.use('Agg')  # Non-interactive backend for server generation
+# Use non-interactive Agg backend for Gradio/server generation if not interactive
+if 'ipykernel' not in sys.modules and matplotlib.get_backend().lower() != 'agg':
+    try:
+        matplotlib.use('Agg')
+    except Exception:
+        pass
 import matplotlib.pyplot as plt
 
 from features import find_hottest_points
@@ -223,7 +229,7 @@ def plot_flux_divergence(model, params=None, k=0.29, grid_resolution=81):
     ax.set_title(f"Divergence of Heat Flux (div F = -k ∇²T)\nPositive = Source, Negative = Sink", fontsize=11, fontweight='bold')
 
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label("div F (W/(m²·cm))", fontsize=9)
+    cbar.set_label("div F (W/m³)", fontsize=9)
     fig.tight_layout()
     return fig
 
@@ -268,15 +274,18 @@ def plot_model_comparison(comparison_df):
     return fig
 
 
-def plot_optimization_trajectory(model, sensor_pos, trajectory, L=4.0, grid_resolution=81):
+def plot_optimization_trajectory(model, sensor_pos, trajectory, params=None, L=4.0, grid_resolution=81):
     """
     Plot the gradient descent trajectory of the relocated heat source.
+    Accepts user-specified parameters, falling back to model defaults.
     """
-    params = model.default_params
+    merged_params = dict(model.default_params)
+    if params:
+        merged_params.update(params)
     xs = np.linspace(0.0, L, grid_resolution)
     ys = np.linspace(0.0, L, grid_resolution)
     X, Y = np.meshgrid(xs, ys)
-    T_grid = model.evaluate_T(X, Y, params)
+    T_grid = model.evaluate_T(X, Y, merged_params)
 
     fig, ax = plt.subplots(figsize=(6.5, 5.5), dpi=100)
 
@@ -308,15 +317,19 @@ def plot_optimization_trajectory(model, sensor_pos, trajectory, L=4.0, grid_reso
     return fig
 
 
-def plot_lagrange_rail(model, a, b, c, optimal_pt, L=4.0, grid_resolution=81):
+def plot_lagrange_rail(model, a, b, c, optimal_pt, params=None, L=4.0, grid_resolution=81):
     """
     Plot the linear mounting rail ax + by = c and mark the hottest point.
+    Accepts user-specified parameters, falling back to model defaults.
+    Properly handles both standard (b != 0) and vertical (b == 0) rails.
     """
-    params = model.default_params
+    merged_params = dict(model.default_params)
+    if params:
+        merged_params.update(params)
     xs = np.linspace(0.0, L, grid_resolution)
     ys = np.linspace(0.0, L, grid_resolution)
     X, Y = np.meshgrid(xs, ys)
-    T_grid = model.evaluate_T(X, Y, params)
+    T_grid = model.evaluate_T(X, Y, merged_params)
 
     fig, ax = plt.subplots(figsize=(6.5, 5.5), dpi=100)
 
@@ -328,12 +341,19 @@ def plot_lagrange_rail(model, a, b, c, optimal_pt, L=4.0, grid_resolution=81):
     # Plot line segment
     line_x = []
     line_y = []
-    for xi in np.linspace(0.0, L, 100):
-        if abs(b) > 1e-6:
+    if abs(b) > 1e-6:
+        for xi in np.linspace(0.0, L, 100):
             yi = (c - a * xi) / b
             if 0.0 <= yi <= L:
                 line_x.append(xi)
                 line_y.append(yi)
+    else:
+        # Vertical rail: a * x = c => x = c / a
+        if abs(a) > 1e-6:
+            x_val = c / a
+            if 0.0 <= x_val <= L:
+                line_x = [x_val, x_val]
+                line_y = [0.0, L]
 
     if line_x:
         ax.plot(line_x, line_y, color='white', linestyle='-', linewidth=2.5, label=f'Rail: {a:.1f}x + {b:.1f}y = {c:.1f}')

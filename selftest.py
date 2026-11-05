@@ -6,7 +6,7 @@
 # theoretical "KNOWN VALUES" specified by the engineering faculty.
 #
 # Important Design Rule:
-# As instructed by the user, the self-test suite ALWAYS evaluates models strictly
+# The self-test suite ALWAYS evaluates models strictly
 # at their DEFAULT parameters, completely isolated from any current UI slider values.
 #
 # Checked Benchmark Quantities:
@@ -25,14 +25,13 @@
 #    - Insulated edges: Tx = 0 on x=0, 4; Ty = 0 on y=0, 4
 #    - Tied corner peaks: (0,0) and (4,4) at 70.00 °C
 # 5. Model D:
-#    - Near (1.3, 1.3), temperature ≈ 71.7 °C (exact 71.64 °C)
+#    - Saddle at (2,2): T = 63.34 °C, D = -1846.6
+#    - Peak at (1.267, 1.267): T = 71.69 °C
+#    - Near (1.3, 1.3), temperature ≈ 71.644 °C
 # ==============================================================================
 
-import math
 import numpy as np
 from models import get_model
-from calculus import compute_gradient_magnitude, compute_laplacian, compute_discriminant
-from features import find_hottest_points
 
 
 def run_all_self_tests():
@@ -181,9 +180,20 @@ def run_all_self_tests():
     mD = get_model('D')
     pD = mD.default_params
 
-    # Point (1.3, 1.3): exact theoretical value 71.644 °C (tolerance 1e-3)
+    # 1. Point (1.3, 1.3): exact theoretical value 71.644 °C (tolerance 1e-3)
     t_d_13 = float(mD.evaluate_T(1.3, 1.3, pD))
     _record('D', "T(1.3, 1.3) Near Hotspot", "71.644 °C", t_d_13, 71.644, 1e-3, "Near primary hotspot (exact analytical 71.644 °C)")
+
+    # 2. Saddle at (2, 2): T = 63.34 °C, D = -1846.6
+    t_d_22 = float(mD.evaluate_T(2.0, 2.0, pD))
+    txx_d_22, tyy_d_22, txy_d_22 = [float(v) for v in mD.evaluate_hessian(2.0, 2.0, pD)]
+    d_d_22 = txx_d_22 * tyy_d_22 - (txy_d_22 ** 2)
+    _record('D', "Saddle T(2, 2)", "63.34 °C", t_d_22, 63.34, 0.01, "Interior saddle point temperature")
+    _record('D', "Saddle D(2, 2)", "-1846.60", d_d_22, -1846.6, 0.1, "Hessian determinant D < 0 confirms saddle")
+
+    # 3. Peak at (1.267, 1.267): T = 71.69 °C
+    t_d_peak = float(mD.evaluate_T(1.267, 1.267, pD))
+    _record('D', "Peak T(1.267, 1.267)", "71.69 °C", t_d_peak, 71.69, 0.01, "Primary local maximum peak")
 
     # Summarize overall results
     passed_count = sum(1 for r in records if r["Status"] == "PASS")

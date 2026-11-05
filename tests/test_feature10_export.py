@@ -12,8 +12,9 @@
 
 import os
 import pytest
+import pandas as pd
 from models import get_model
-from report import generate_text_report, generate_csv_report
+from report import generate_text_report, generate_csv_report, generate_grid_csv
 
 
 def test_text_report_generation(tmp_path):
@@ -36,21 +37,53 @@ def test_text_report_generation(tmp_path):
     assert "DOUBLE INTEGRAL & THERMAL ENERGY" in content
     assert "THEORETICAL SELF-TEST MATRIX" in content
     assert "PASS" in content
+    # Confirm gap explanation maintains upper case for acronyms/terms inside the sentence
+    assert "Explanation of Gap:" in content
 
 
 def test_csv_report_generation(tmp_path):
-    """Verify that CSV report is created and contains tabular rows."""
+    """Verify that CSV report is created via pandas and contains structured columns."""
     model_a = get_model('A')
     out_file = str(tmp_path / "test_report.csv")
 
     path = generate_csv_report(model_a, output_path=out_file)
     assert os.path.exists(path)
 
-    with open(path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
+    df = pd.read_csv(path)
+    assert list(df.columns) == ["Section", "Metric", "Value", "Units"]
+    assert len(df) > 15
+    metrics = list(df["Metric"])
+    assert "Maximum Temperature" in metrics
+    assert "Stored Thermal Energy" in metrics
+    assert "Discriminant D" in metrics
 
-    assert len(lines) > 20
-    joined = "".join(lines)
-    assert "Maximum Temperature" in joined
-    assert "Stored Thermal Energy" in joined
-    assert "Discriminant D" in joined
+
+def test_csv_report_model_d_dynamic_params(tmp_path):
+    """Verify that CSV report for Model D correctly loops over Model D param_keys without hardcoded T_edge/T0."""
+    model_d = get_model('D')
+    out_file = str(tmp_path / "test_report_d.csv")
+
+    path = generate_csv_report(model_d, output_path=out_file)
+    assert os.path.exists(path)
+
+    df = pd.read_csv(path)
+    params_section = df[df["Section"] == "Parameters"]
+    param_names = set(params_section["Metric"])
+    assert "T1" in param_names
+    assert "cx1" in param_names
+    assert "s1" in param_names
+    assert "T0" not in param_names
+
+
+def test_grid_csv_generation(tmp_path):
+    """Verify that grid CSV export produces a pandas DataFrame with x, y, T, Tx, Ty."""
+    model_a = get_model('A')
+    out_file = str(tmp_path / "test_grid.csv")
+
+    path = generate_grid_csv(model_a, grid_res=21, output_path=out_file)
+    assert os.path.exists(path)
+
+    df = pd.read_csv(path)
+    assert list(df.columns) == ["x", "y", "T", "Tx", "Ty"]
+    assert len(df) == 21 * 21  # 441 points
+    assert df["T"].max() > 80.0

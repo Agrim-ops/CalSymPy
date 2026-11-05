@@ -21,7 +21,6 @@
 
 import time
 import numpy as np
-import sympy as sp
 from models import get_model
 
 

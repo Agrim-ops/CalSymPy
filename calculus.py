@@ -116,15 +116,22 @@ def compute_laplacian(Txx, Tyy):
 
 def compute_flux_divergence(Txx, Tyy, k):
     """
-    Compute the divergence of the heat flux vector field F = -k * ∇T:
-    div F = ∇ · (-k * ∇T) = -k * (Txx + Tyy) = -k * ∇²T.
+    Compute the divergence of the heat flux vector field F = -k * ∇T in W/m³:
+    div F = ∇ · (-k * ∇T) = -k * ∇²T.
+    
+    Units convention:
+    - Coordinates x, y are in cm, so unmixed second derivatives Txx and Tyy are in °C/cm².
+    - Converting to °C/m² requires scaling by (100 cm/m)² = 10,000.
+    - Thermal conductivity k is in W/(m·K).
+    - Resulting divergence div F is in W/m³.
     
     Physical & Calculus interpretation:
     - div F > 0: Heat is expanding outward from this point (acting as a heat source).
     - div F < 0: Heat is converging inward toward this point (acting as a heat sink).
     """
-    laplacian = compute_laplacian(Txx, Tyy)
-    return -float(k) * laplacian
+    laplacian_cm = compute_laplacian(Txx, Tyy)
+    laplacian_m = laplacian_cm * 10000.0
+    return -float(k) * laplacian_m
 
 
 def is_critical_point(Tx, Ty, tolerance=1e-3):

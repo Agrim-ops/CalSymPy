@@ -42,16 +42,13 @@ def plot_descent_path(plate, path, n_grid=50):
     ys = np.linspace(0.0, plate.L, n_grid)
     X, Y = np.meshgrid(xs, ys)
     Z = plate.get_temp(X, Y)
-
     plt.figure(figsize=(6, 5))
     plt.imshow(Z, origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
-
     px = []
     py = []
     for pt in path:
         px.append(pt[0])
         py.append(pt[1])
-
     plt.plot(px, py, "w--", linewidth=2, label="Descent Path")
     plt.plot(px[0], py[0], "go", markersize=8, label="Start")
     plt.plot(px[-1], py[-1], "co", markersize=8, label="End (Cooler)")

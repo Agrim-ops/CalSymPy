@@ -98,11 +98,22 @@ class Plate:
         if model == "A":
             self.t_edge = 25.0
             self.t0 = 60.0
+            self.s = 2.0
+            self.cx = 2.0
+            self.cy = 2.0
         elif model == "B":
             self.t_edge = 20.0
             self.t0 = 50.0
         elif model == "C":
             self.t_edge = 25.0
+            self.t1 = 40.0
+            self.s1 = 1.5
+            self.cx1 = 1.2
+            self.cy1 = 1.2
+            self.t2 = 40.0
+            self.s2 = 1.5
+            self.cx2 = 2.8
+            self.cy2 = 2.8
 
     def get_temp(self, x, y):
         if self.model == "A":

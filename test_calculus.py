@@ -39,6 +39,13 @@ assert 45.0 < avg_t < 48.0, "Model A average temp should be around 46.5"
 tan_val = calculus.tangent_plane(plate_a, 2.0, 2.0, 2.05, 2.05)
 assert abs(tan_val - 85.0) < 1e-4
 
+# Non-zero gradient tangent plane at (3, 2) evaluated at (3.05, 2.0)
+t_base = plate_a.get_temp(3.0, 2.0)
+tx_base, ty_base = plate_a.get_grad(3.0, 2.0)
+expected_tan = t_base + tx_base * (3.05 - 3.0) + ty_base * (2.0 - 2.0)
+calc_tan = calculus.tangent_plane(plate_a, 3.0, 2.0, 3.05, 2.0)
+assert abs(calc_tan - expected_tan) < 1e-5, "Tangent plane at (3,2) must match hand linearisation"
+
 # Taylor degree 2 includes curvature
 tay_val = calculus.taylor_degree_2(plate_a, 2.0, 2.0, 2.1, 2.1)
 actual_val = plate_a.get_temp(2.1, 2.1)

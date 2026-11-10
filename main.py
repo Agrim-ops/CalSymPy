@@ -20,7 +20,11 @@ def ask_param(name, current_val):
     if val == "":
         return current_val
     try:
-        return float(val)
+        num = float(val)
+        if name in ["L", "s", "s1", "s2"] and num <= 0.0:
+            print(name + " must be positive. Keeping " + str(current_val))
+            return current_val
+        return num
     except ValueError:
         print("Invalid number. Keeping " + str(current_val))
         return current_val

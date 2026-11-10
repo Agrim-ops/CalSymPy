@@ -255,18 +255,21 @@ def save_report():
     metrics = ["Model", "Peak_X", "Peak_Y", "Peak_Temp", "Risk_Level", "Average_Temp"]
     values = [plate.model, round(hx, 2), round(hy, 2), round(ht, 2), risk, round(avg_t, 2)]
     fmt = combo_save.get().upper()
-    if fmt == "CSV":
-        fname = "report_" + plate.model + ".csv"
-        df = pd.DataFrame({"Metric": metrics, "Value": values})
-        df.to_csv(fname, index=False)
-    else:
-        fname = "report_" + plate.model + ".txt"
-        f = open(fname, "w")
-        for i in range(len(metrics)):
-            f.write(str(metrics[i]) + ": " + str(values[i]) + "\n")
-        f.close()
-    lbl_save_status.config(text="Report saved to " + fname)
-    messagebox.showinfo("Report Saved", "Successfully saved report to " + fname)
+    fname = "report_" + plate.model + (".csv" if fmt == "CSV" else ".txt")
+    try:
+        if fmt == "CSV":
+            df = pd.DataFrame({"Metric": metrics, "Value": values})
+            df.to_csv(fname, index=False)
+        else:
+            f = open(fname, "w")
+            for i in range(len(metrics)):
+                f.write(str(metrics[i]) + ": " + str(values[i]) + "\n")
+            f.close()
+        lbl_save_status.config(text="Report saved to " + fname, fg="green")
+        messagebox.showinfo("Report Saved", "Successfully saved report to " + fname)
+    except (IOError, OSError):
+        lbl_save_status.config(text="Error saving " + fname, fg="red")
+        messagebox.showerror("Save Error", "Could not save report (file may be open or read-only).")
 
 def setup_left_panel(parent):
     # Build left panel widgets for model and parameters

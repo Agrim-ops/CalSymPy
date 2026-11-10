@@ -148,24 +148,22 @@ def option_save_report(plate):
     hx, hy, ht = calculus.find_hottest_point(plate, n_grid=50)
     risk = calculus.get_risk_level(ht)
     avg_t = calculus.average_temperature(plate, n_steps=60)
-    
     metrics = ["Model", "Peak_X", "Peak_Y", "Peak_Temp", "Risk_Level", "Average_Temp"]
     values = [plate.model, round(hx, 2), round(hy, 2), round(ht, 2), risk, round(avg_t, 2)]
-    
-    df = pd.DataFrame({"Metric": metrics, "Value": values})
-    
     fmt = input("Save format (1 for .csv, 2 for .txt): ").strip()
-    if fmt == "1":
-        filename = "report_" + plate.model + ".csv"
-        df.to_csv(filename, index=False)
+    filename = "report_" + plate.model + (".csv" if fmt == "1" else ".txt")
+    try:
+        if fmt == "1":
+            df = pd.DataFrame({"Metric": metrics, "Value": values})
+            df.to_csv(filename, index=False)
+        else:
+            f = open(filename, "w")
+            for i in range(len(metrics)):
+                f.write(str(metrics[i]) + ": " + str(values[i]) + "\n")
+            f.close()
         print("Saved report to " + filename)
-    else:
-        filename = "report_" + plate.model + ".txt"
-        f = open(filename, "w")
-        for i in range(len(metrics)):
-            f.write(str(metrics[i]) + ": " + str(values[i]) + "\n")
-        f.close()
-        print("Saved report to " + filename)
+    except (IOError, OSError):
+        print("Error: Could not save report to " + filename)
 
 def handle_choice(choice, plate):
     if choice == "1":

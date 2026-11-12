@@ -27,18 +27,7 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 
 ---
 
-## 3. Hand-Derived Derivatives (Model C - Two Hotspots)
-1. Define parameters for hotspot 1 (t1, s1, cx1, cy1) and hotspot 2 (t2, s2, cx2, cy2).
-2. Calculate temperature contribution of each hotspot using the Gaussian formula.
-3. Sum edge temperature and both hotspot contributions: T = T_edge + T1 + T2.
-4. Differentiate each Gaussian independently using the chain rule.
-5. Sum first derivatives: Tx = Tx1 + Tx2 and Ty = Ty1 + Ty2.
-6. Differentiate first derivatives using the product rule for each hotspot.
-7. Sum second derivatives: Txx = Txx1 + Txx2, Tyy = Tyy1 + Tyy2, and Txy = Txy1 + Txy2.
-
----
-
-## 4. Gradient and D-Test (Second Derivative Test)
+## 3. Gradient and D-Test (Second Derivative Test)
 1. Calculate first partial derivatives Tx and Ty at coordinates (x, y).
 2. Construct gradient vector [Tx, Ty] indicating the direction of steepest increase.
 3. Compute gradient magnitude as square root of (Tx^2 + Ty^2).
@@ -51,7 +40,7 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 
 ---
 
-## 5. Hottest-Point Grid Search
+## 4. Hottest-Point Grid Search
 1. Initialize highest recorded temperature to a large negative number.
 2. Divide plate length L into N equal intervals with spacing dx = L / N.
 3. Outer loop: step coordinate x across grid from 0 to L by dx.
@@ -64,7 +53,7 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 
 ---
 
-## 6. Midpoint Riemann Sum Average (Double Integral)
+## 5. Midpoint Riemann Sum Average (Double Integral)
 1. Choose number of grid intervals N along each axis of the square plate.
 2. Calculate interval width dx = L / N and dy = L / N.
 3. Calculate area of each small rectangular cell: dA = dx * dy.
@@ -77,7 +66,7 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 
 ---
 
-## 7. Tangent Plane and Degree-2 Taylor Polynomial
+## 6. Tangent Plane and Degree-2 Taylor Polynomial
 1. Choose expansion base point (a, b) and evaluation point (x, y).
 2. Compute displacements from base point: dx = x - a and dy = y - b.
 3. Evaluate base temperature T(a, b) and gradient components Tx, Ty at (a, b).
@@ -88,7 +77,7 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 
 ---
 
-## 8. Gradient Descent (Cooling Chip Relocation)
+## 7. Gradient Descent (Cooling Chip Relocation)
 1. Set starting chip location (x, y), learning rate step size, and step limit.
 2. Record initial chip location in the trajectory path list.
 3. Loop from 1 to step limit:
@@ -101,7 +90,7 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 
 ---
 
-## 9. Risk Level Classification
+## 8. Risk Level Classification
 1. Receive peak plate temperature T in degrees Celsius.
 2. If temperature T is strictly less than 70 degrees Celsius:
 3. Assign risk classification "Low" (safe operating temperature).
@@ -110,17 +99,3 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 6. If temperature T is strictly greater than 90 degrees Celsius:
 7. Assign risk classification "High" (exceeds thermal limit, cooling required).
 8. Return assigned risk level.
-
----
-
-## 10. GUI Flow (Apply Button -> Update Plate -> Redraw)
-1. User enters parameter values into left-panel Entry boxes and clicks Apply.
-2. Callback reads text from each Entry box and converts each string into a number.
-3. If any conversion fails, display warning popup and abort update without crashing.
-4. Check that plate size L and dispersion s are positive numbers.
-5. Update plate model object with the validated numerical values.
-6. Clear existing plot axes on the Matplotlib Figure to remove stale elements.
-7. Compute updated temperature matrix and gradient vectors over grid.
-8. Draw updated heat map, contour lines, gradient quiver arrows, and colorbar.
-9. Refresh cooling tab background plot and recompute summary metrics.
-10. Update status message to confirm parameters have been applied.

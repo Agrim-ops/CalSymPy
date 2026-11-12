@@ -3,67 +3,39 @@ import models
 import calculus
 
 print("Running calculus tests...")
-
-# 1. Test Model A at defaults
+# 1. Model A tests
 plate_a = models.Plate("A")
-
-# Center point (2, 2)
-t_center = plate_a.get_temp(2.0, 2.0)
-assert abs(t_center - 85.0) < 1e-4, "Model A T(2,2) should be 85"
-
+assert abs(plate_a.get_temp(2.0, 2.0) - 85.0) < 1e-4, "T(2,2) should be 85"
 tx, ty, mag = calculus.gradient(plate_a, 2.0, 2.0)
-assert abs(tx) < 1e-4 and abs(ty) < 1e-4, "Model A gradient at (2,2) should be 0"
-
+assert abs(tx) < 1e-4 and abs(ty) < 1e-4, "Gradient at (2,2) should be 0"
 txx, tyy, txy, d, classification = calculus.second_derivative_test(plate_a, 2.0, 2.0)
-assert abs(txx - (-60.0)) < 1e-4, "Txx at (2,2) should be -60"
-assert abs(tyy - (-60.0)) < 1e-4, "Tyy at (2,2) should be -60"
-assert abs(txy) < 1e-4, "Txy at (2,2) should be 0"
-assert abs(d - 3600.0) < 1e-4, "D at (2,2) should be 3600"
-assert classification == "Local Maximum", "Classification should be Local Maximum"
+assert abs(txx - (-60.0)) < 1e-4 and abs(tyy - (-60.0)) < 1e-4
+assert abs(txy) < 1e-4 and abs(d - 3600.0) < 1e-4 and classification == "Local Maximum"
+assert abs(plate_a.get_temp(3.0, 2.0) - 61.39) < 0.01
 
-# Point (3, 2)
-t_32 = plate_a.get_temp(3.0, 2.0)
-assert abs(t_32 - 61.39) < 0.01, "Model A T(3,2) should be approximately 61.39"
-
-# 2. Test Model B
+# 2. Model B tests
 plate_b = models.Plate("B")
-t_b_center = plate_b.get_temp(2.0, 2.0)
-assert abs(t_b_center - 70.0) < 1e-4, "Model B T(2,2) should be 70"
+assert abs(plate_b.get_temp(2.0, 2.0) - 70.0) < 1e-4, "Model B T(2,2) should be 70"
 
-# 3. Test average temperature double integral
+# 3. Double integral average temperature
 avg_t = calculus.average_temperature(plate_a, n_steps=60)
-assert 45.0 < avg_t < 48.0, "Model A average temp should be around 46.5"
+assert 45.0 < avg_t < 48.0, "Average temp should be around 46.5"
 
-# 4. Test tangent plane and Taylor polynomial
-# Near (2, 2), tangent plane is flat at 85
-tan_val = calculus.tangent_plane(plate_a, 2.0, 2.0, 2.05, 2.05)
-assert abs(tan_val - 85.0) < 1e-4
-
-# Non-zero gradient tangent plane at (3, 2) evaluated at (3.05, 2.0)
+# 4. Tangent plane and Taylor polynomial
+assert abs(calculus.tangent_plane(plate_a, 2.0, 2.0, 2.05, 2.05) - 85.0) < 1e-4
 t_base = plate_a.get_temp(3.0, 2.0)
 tx_base, ty_base = plate_a.get_grad(3.0, 2.0)
-expected_tan = t_base + tx_base * (3.05 - 3.0) + ty_base * (2.0 - 2.0)
-calc_tan = calculus.tangent_plane(plate_a, 3.0, 2.0, 3.05, 2.0)
-assert abs(calc_tan - expected_tan) < 1e-5, "Tangent plane at (3,2) must match hand linearisation"
-
-# Taylor degree 2 includes curvature
+expected_tan = t_base + tx_base * 0.05
+assert abs(calculus.tangent_plane(plate_a, 3.0, 2.0, 3.05, 2.0) - expected_tan) < 1e-5
 tay_val = calculus.taylor_degree_2(plate_a, 2.0, 2.0, 2.1, 2.1)
-actual_val = plate_a.get_temp(2.1, 2.1)
-assert abs(tay_val - actual_val) < 0.01, "Taylor degree 2 should closely approximate actual value"
+assert abs(tay_val - plate_a.get_temp(2.1, 2.1)) < 0.01
 
-# 5. Test gradient descent moves downhill
+# 5. Gradient descent downhill cooling
 path, final_t = calculus.gradient_descent(plate_a, 1.5, 1.5, step_size=0.08, steps=20)
-start_t = plate_a.get_temp(1.5, 1.5)
-assert final_t < start_t, "Gradient descent must cool down the chip"
+assert final_t < plate_a.get_temp(1.5, 1.5)
 
-# 6. Test grid hottest point finder
+# 6. Grid hottest point and risk level
 hx, hy, ht = calculus.find_hottest_point(plate_a, n_grid=40)
-assert abs(hx - 2.0) < 0.15 and abs(hy - 2.0) < 0.15
-assert abs(ht - 85.0) < 0.2
-
-# 7. Test risk levels
-assert calculus.get_risk_level(50.0) == "Low"
-assert calculus.get_risk_level(75.0) == "Medium"
-assert calculus.get_risk_level(95.0) == "High"
-
+assert abs(hx - 2.0) < 0.15 and abs(hy - 2.0) < 0.15 and abs(ht - 85.0) < 0.2
+assert calculus.get_risk_level(50.0) == "Low" and calculus.get_risk_level(75.0) == "Medium" and calculus.get_risk_level(95.0) == "High"
 print("All calculus tests passed successfully!")

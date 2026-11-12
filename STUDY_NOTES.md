@@ -66,38 +66,8 @@ txx, tyy, txy = models.hessian_b(2.0, 2.0)
 print("Model B peak Hessian:", txx, tyy, txy)
 ```
 
-### `temp_c(x, y, t_edge=25.0, t1=40.0, s1=1.5, cx1=1.2, cy1=1.2, t2=40.0, s2=1.5, cx2=2.8, cy2=2.8)`
-- **What it does**: Computes the temperature resulting from two separate Gaussian microchips on one board.
-- **Formula or idea**: Sum of two Gaussian functions: $T = T_{\text{edge}} + T_1 \exp(-r_1^2 / s_1) + T_2 \exp(-r_2^2 / s_2)$.
-- **Example**:
-```python
-import models
-t = models.temp_c(1.2, 1.2)
-print("Model C near chip 1:", t)
-```
-
-### `grad_c(x, y, t_edge=25.0, t1=40.0, s1=1.5, cx1=1.2, cy1=1.2, t2=40.0, s2=1.5, cx2=2.8, cy2=2.8)`
-- **What it does**: Computes the combined gradient vector from two Gaussian heat sources.
-- **Formula or idea**: Linearity of differentiation: the gradient of a sum equals the sum of the individual gradients ($\nabla T = \nabla T_1 + \nabla T_2$).
-- **Example**:
-```python
-import models
-tx, ty = models.grad_c(2.0, 2.0)
-print("Model C slopes at midpoint:", tx, ty)
-```
-
-### `hessian_c(x, y, t_edge=25.0, t1=40.0, s1=1.5, cx1=1.2, cy1=1.2, t2=40.0, s2=1.5, cx2=2.8, cy2=2.8)`
-- **What it does**: Evaluates the second partial derivatives for the two-hotspot configuration.
-- **Formula or idea**: Sum of the second partial derivatives of both Gaussian sources ($T_{xx} = T_{xx1} + T_{xx2}$, etc.).
-- **Example**:
-```python
-import models
-txx, tyy, txy = models.hessian_c(2.0, 2.0)
-print("Model C saddle Hessian:", txx, tyy, txy)
-```
-
 ### `Plate(model="A")`
-- **What it does**: Simple class storing current plate dimensions, parameters, and providing helper methods for temperature and derivatives.
+- **What it does**: Simple class storing current plate dimensions, parameters, and providing helper methods for temperature and derivatives (supports Model A and Model B).
 - **Formula or idea**: Object-oriented data container bundling plate parameters with `get_temp(x, y)`, `get_grad(x, y)`, and `get_hessian(x, y)`.
 - **Example**:
 ```python
@@ -204,16 +174,6 @@ p = models.Plate("A")
 plots.plot_heatmap(p)
 ```
 
-### `plot_quiver(plate, n_grid=12)`
-- **What it does**: Displays gradient vectors across the plate as directional arrows showing the path of steepest ascent.
-- **Formula or idea**: Arrows at $(x, y)$ pointing along vector $\langle T_x, T_y \rangle$ via `plt.quiver`.
-- **Example**:
-```python
-import models, plots
-p = models.Plate("A")
-plots.plot_quiver(p)
-```
-
 ### `plot_descent_path(plate, path, n_grid=50)`
 - **What it does**: Plots the trajectory taken by gradient descent overlaid on the plate temperature map.
 - **Formula or idea**: Traces line connecting discrete positions $(x_k, y_k)$ from initial hot location to cooled final location.
@@ -239,7 +199,7 @@ main.show_menu()
 ```
 
 ### `option_choose_model(plate)`
-- **What it does**: Prompts user to pick Model A, B, or C and optionally change baseline parameters ($T_{\text{edge}}, T_0, s$).
+- **What it does**: Prompts user to pick Model A or B and optionally change baseline parameters ($T_{\text{edge}}, T_0, s, c_x, c_y, L$).
 - **Formula or idea**: Updates the active `Plate` instance settings based on console input.
 - **Example**:
 ```python

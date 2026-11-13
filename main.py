@@ -4,10 +4,12 @@ import models
 import calculus
 import plots
 
+# Why this exists: Displays the console menu options (0-7) to navigate the program
 def show_menu():
     print("\n--- CalSymPy Menu ---")
     print("1. Model & params\n2. Heat map\n3. Point lookup\n4. Hottest point\n5. Average temp\n6. Gradient descent\n7. Save report\n0. Quit")
 
+# Why this exists: Prompts user for a parameter, keeps current if blank, and validates positive numbers
 def ask_param(name, current_val):
     val = input("Enter " + name + " (current " + str(current_val) + "): ").strip()
     if val == "":
@@ -22,6 +24,7 @@ def ask_param(name, current_val):
         print("Invalid number. Keeping " + str(current_val))
         return current_val
 
+# Why this exists: Menu Option 1 - Lets user switch between Model A and Model B and change parameters
 def option_choose_model(plate):
     print("\nCurrent model is:", plate.model)
     m = input("Choose model (A: single hotspot, B: sine plate): ").strip().upper()
@@ -37,6 +40,7 @@ def option_choose_model(plate):
             plate.cy = ask_param("cy", plate.cy)
         plate.L = ask_param("L", plate.L)
 
+# Why this exists: Menu Option 3 - Computes temperature, gradient, and Hessian D-test at user coordinates
 def option_lookup(plate):
     try:
         x_in = float(input("Enter x coordinate (0 to " + str(plate.L) + "): ").strip())
@@ -56,17 +60,20 @@ def option_lookup(plate):
     print("Second partials: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
     print("Discriminant D: " + str(round(d, 2)) + " (" + result + ")")
 
+# Why this exists: Menu Option 4 - Finds peak temperature coordinates via grid search and shows risk level
 def option_hottest(plate):
     print("\nSearching grid for hottest point...")
     hx, hy, ht = calculus.find_hottest_point(plate, n_grid=60)
     print("Hottest point is at x = " + str(round(hx, 2)) + " cm, y = " + str(round(hy, 2)) + " cm")
     print("Peak temperature: " + str(round(ht, 2)) + " deg C (" + calculus.get_risk_level(ht) + " risk)")
 
+# Why this exists: Menu Option 5 - Calculates average plate temperature via midpoint Riemann sum
 def option_average(plate):
     print("\nCalculating double integral Riemann sum...")
     avg = calculus.average_temperature(plate, n_steps=80)
     print("Average plate temperature: " + str(round(avg, 2)) + " deg C")
 
+# Why this exists: Menu Option 6 - Simulates moving a chip away from heat along negative gradient
 def option_descent(plate):
     try:
         val_x = input("Enter initial chip x (default 1.5): ").strip()
@@ -87,6 +94,7 @@ def option_descent(plate):
     if input("Show descent path plot? (y/n): ").strip().lower() == "y":
         plots.plot_descent_path(plate, path)
 
+# Why this exists: Menu Option 7 - Saves plate summary metrics to a CSV or TXT file with error handling
 def option_save_report(plate):
     hx, hy, ht = calculus.find_hottest_point(plate, n_grid=50)
     avg_t = calculus.average_temperature(plate, n_steps=60)
@@ -106,6 +114,7 @@ def option_save_report(plate):
     except (IOError, OSError):
         print("Error: Could not save report to " + filename)
 
+# Why this exists: Main application loop that displays menu and runs chosen features until user exits
 def main():
     plate = models.Plate("A")
     print("Welcome to CalSymPy (MAT 112 Engineering Mathematics & Python)")

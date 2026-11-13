@@ -5,7 +5,7 @@ import models
 import calculus
 import plots
 
-st.title("CalSymPy — Heat Distribution")
+st.title("CalSymPy - Heat Distribution")
 st.write("First-year multivariable calculus tools for temperature on a square plate.")
 
 # Sidebar model and parameter controls
@@ -16,14 +16,14 @@ plate = models.Plate(model)
 if model == "A":
     plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=25.0)
     plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=60.0)
-    plate.s = st.sidebar.number_input("s (dispersion)", value=2.0, min_value=0.1)
+    plate.s = max(0.1, st.sidebar.number_input("s (dispersion)", value=2.0, min_value=0.1))
     plate.cx = st.sidebar.number_input("cx (center x)", value=2.0)
     plate.cy = st.sidebar.number_input("cy (center y)", value=2.0)
-    plate.L = st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0)
+    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
 else:
     plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=20.0)
     plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=50.0)
-    plate.L = st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0)
+    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
 
 # Heat map display
 st.subheader("Temperature Heat Map")
@@ -58,11 +58,14 @@ st.subheader("Chip Cooling")
 cx0 = st.number_input("Start chip x (cm)", value=1.5)
 cy0 = st.number_input("Start chip y (cm)", value=1.5)
 if st.button("Move chip"):
-    path, final_t = calculus.gradient_descent(plate, cx0, cy0)
-    st.write("Final chip position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
-    st.write("Final chip temperature: " + str(round(final_t, 2)) + " deg C")
-    fig_d = plots.plot_descent_path(plate, path, show=False)
-    st.pyplot(fig_d)
+    if cx0 < 0.0 or cx0 > plate.L or cy0 < 0.0 or cy0 > plate.L:
+        st.warning("Chip start position is outside the plate (0 to " + str(plate.L) + ")!")
+    else:
+        path, final_t = calculus.gradient_descent(plate, cx0, cy0)
+        st.write("Final chip position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
+        st.write("Final chip temperature: " + str(round(final_t, 2)) + " deg C")
+        fig_d = plots.plot_descent_path(plate, path, show=False)
+        st.pyplot(fig_d)
 
 # Download CSV report
 metrics = ["Model", "Plate Size L", "T_edge", "T0", "Hottest X", "Hottest Y", "Peak Temp", "Risk Level", "Average Temp"]

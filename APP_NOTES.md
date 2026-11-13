@@ -8,7 +8,7 @@
 ## 1. What Streamlit Does on Each Rerun
 
 Streamlit operates on an **immediate-mode reactive execution model**:
-1. When the page first loads in a browser, Streamlit executes `app.py` from top to bottom (line 1 to line 71), generating all UI widgets and visualizations.
+1. When the page first loads in a browser, Streamlit executes `app.py` from top to bottom (line 1 to line 74), generating all UI widgets and visualizations.
 2. Whenever the user modifies **any widget** (such as switching the model dropdown, changing a temperature number input, or entering new coordinates), Streamlit immediately **reruns the entire script from top to bottom** with the new widget values.
 3. Because the calculations in `models.py` and `calculus.py` are purely algebraic and vectorized with NumPy, the full top-to-bottom re-execution completes in a fraction of a second, providing instant visual feedback without complex event listeners or callback registrations.
 
@@ -28,7 +28,7 @@ import plots
 
 ### Lines 8–9: Header and Subtitle
 ```python
-st.title("CalSymPy — Heat Distribution")
+st.title("CalSymPy - Heat Distribution")
 st.write("First-year multivariable calculus tools for temperature on a square plate.")
 ```
 - **Explanation**: Renders the main web page title and a one-line description of the tool at the top of the browser view.
@@ -42,20 +42,20 @@ plate = models.Plate(model)
 if model == "A":
     plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=25.0)
     plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=60.0)
-    plate.s = st.sidebar.number_input("s (dispersion)", value=2.0, min_value=0.1)
+    plate.s = max(0.1, st.sidebar.number_input("s (dispersion)", value=2.0, min_value=0.1))
     plate.cx = st.sidebar.number_input("cx (center x)", value=2.0)
     plate.cy = st.sidebar.number_input("cy (center y)", value=2.0)
-    plate.L = st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0)
+    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
 else:
     plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=20.0)
     plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=50.0)
-    plate.L = st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0)
+    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
 ```
 - **Explanation**: Creates controls in the left collapsible sidebar.
   - `st.sidebar.selectbox` lets the user choose between Model A (Gaussian hotspot) and Model B (sine plate).
   - An instance of `Plate(model)` is created.
   - Parameter inputs for $T_{\text{edge}}$, $T_0$, $L$, and Model A specifics ($s, c_x, c_y$) are bound directly to `plate` attributes.
-  - Enforces sensible physical constraints: `min_value=0.1` for dispersion $s$ and `min_value=1.0` for plate size $L$ to mathematically prevent division by zero.
+  - Enforces sensible physical constraints: `min_value=0.1` and `max(0.1, ...)` for dispersion $s$, and `min_value=1.0` and `max(1.0, ...)` for plate size $L$ to mathematically prevent division by zero.
 
 ### Lines 28–31: Main Temperature Heat Map
 ```python
@@ -100,24 +100,27 @@ else:
   - Validates coordinates: if $x$ or $y$ is outside $[0, L]$, shows an amber warning banner.
   - Otherwise, evaluates analytical temperature $T(x, y)$, gradient slopes $\nabla T = \langle T_x, T_y \rangle$, gradient magnitude $|\nabla T|$, second partial derivatives ($T_{xx}, T_{yy}, T_{xy}$), and Hessian discriminant $D = T_{xx}T_{yy} - T_{xy}^2$ with classification (Local Maximum, Minimum, Saddle Point, or Inconclusive).
 
-### Lines 57–66: Chip Cooling via Gradient Descent
+### Lines 57–69: Chip Cooling via Gradient Descent
 ```python
 st.subheader("Chip Cooling")
 cx0 = st.number_input("Start chip x (cm)", value=1.5)
 cy0 = st.number_input("Start chip y (cm)", value=1.5)
 if st.button("Move chip"):
-    path, final_t = calculus.gradient_descent(plate, cx0, cy0)
-    st.write("Final chip position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
-    st.write("Final chip temperature: " + str(round(final_t, 2)) + " deg C")
-    fig_d = plots.plot_descent_path(plate, path, show=False)
-    st.pyplot(fig_d)
+    if cx0 < 0.0 or cx0 > plate.L or cy0 < 0.0 or cy0 > plate.L:
+        st.warning("Chip start position is outside the plate (0 to " + str(plate.L) + ")!")
+    else:
+        path, final_t = calculus.gradient_descent(plate, cx0, cy0)
+        st.write("Final chip position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
+        st.write("Final chip temperature: " + str(round(final_t, 2)) + " deg C")
+        fig_d = plots.plot_descent_path(plate, path, show=False)
+        st.pyplot(fig_d)
 ```
 - **Explanation**: Simulates relocating an overheating chip away from the heat source.
-  - When the user clicks the "Move chip" button, `st.button` evaluates to `True`.
+  - When the user clicks the "Move chip" button, validates that the start position lies within plate margins.
   - Calls `calculus.gradient_descent(plate, cx0, cy0)`, which steps along the negative gradient $-\nabla T$ for 30 iterations while clamping to physical plate margins.
   - Displays final position, cooled temperature, and plots the trajectory overlay on the thermal heatmap.
 
-### Lines 68–71: Downloadable Engineering Report
+### Lines 71–74: Downloadable Engineering Report
 ```python
 metrics = ["Model", "Plate Size L", "T_edge", "T0", "Hottest X", "Hottest Y", "Peak Temp", "Risk Level", "Average Temp"]
 values = [plate.model, plate.L, plate.t_edge, plate.t0, round(hx, 2), round(hy, 2), round(ht, 2), risk, round(avg_t, 2)]

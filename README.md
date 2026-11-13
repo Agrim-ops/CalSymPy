@@ -2,6 +2,9 @@
 
 CalSymPy is a clean, explainable first-year engineering mathematics project modeling steady-state 2D heat distribution $T(x, y)$ on a square plate.
 
+## Live Web App
+- **Live Demo**: `https://calsympy-heat-map.onrender.com` (Placeholder - see `DEPLOY.md` to deploy to Render)
+
 ## Features
 - **Models**:
   - Model A: Single Gaussian hotspot $T(x, y) = T_{\text{edge}} + T_0 \exp(-((x-c_x)^2 + (y-c_y)^2)/s)$
@@ -13,18 +16,23 @@ CalSymPy is a clean, explainable first-year engineering mathematics project mode
   - Downhill gradient descent to relocate heat-sensitive components
   - Grid search for hottest point and silicon thermal risk level
 - **Interfaces**:
-  - **Web Application**: Lightweight Streamlit UI in `app.py` (`streamlit run app.py`). See `APP_NOTES.md` and `DEPLOY.md`.
-  - **Console Interface**: Interactive console menu in `main.py` (`python main.py`).
+  - **Web Application**: Lightweight Streamlit UI in `app.py`. See `APP_NOTES.md` and `DEPLOY.md`.
+  - **Console Interface**: Interactive console menu in `main.py`.
 
 ## Running the Application & Tests
+
+### 1. Run Tests
 ```bash
-# Run unit tests and symbolic checks
 python check_with_sympy.py
 python test_calculus.py
+```
 
-# Launch web UI
+### 2. Run the Web Application
+```bash
 streamlit run app.py
+```
 
-# Launch console interface
+### 3. Run the Console Interface
+```bash
 python main.py
 ```

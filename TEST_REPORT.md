@@ -13,13 +13,13 @@ This test report documents the test runs, real failure logs, fixes applied, desi
   - Python Version: Python 3.12.10
   - Dependencies: `numpy==2.5.3`, `matplotlib==3.11.2`, `pandas==3.1.0`, `scipy==1.18.1`, `sympy==1.14.0`
   - Clean virtual environment verified from `requirements.txt`.
-- **Total Test Cases Executed**: 24 tests across console, numerical integration, boundary conditions, and notebook execution.
+- **Total Test Cases Executed**: 30 tests across console, numerical integration, boundary conditions, notebook execution, and Streamlit web application.
 - **Initial Test Results**:
-  - Passed: 22
+  - Passed: 28
   - Failed (Real Bugs): 2
 - **Bugs Fixed**: 2 (both fixed in beginner style and verified with automated re-tests).
-- **Post-Fix Test Results**: 24 Passed, 0 Failed.
-- **Scope Note**: In branch `trimmed`, GUI files (`gui.py`, `GUI_NOTES.md`, `GUI_VIVA.md`) were removed (desktop GUI documented in `README.md` as future scope), and Model C was removed to keep the entire codebase under 400 lines while retaining all 8 core multivariable calculus tools.
+- **Post-Fix Test Results**: 30 Passed, 0 Failed.
+- **Scope**: Covers the two analytical temperature models (Model A: Gaussian hotspot, Model B: Sine plate), the 8 core multivariable calculus tools, the interactive console interface, and the Streamlit web application.
 
 ---
 
@@ -51,6 +51,12 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 | **TC-22** | `calculus.py` | `average_temperature` vs SymPy exact ($n=80$) | Higher accuracy midpoint Riemann sum | Value: $40.266841^\circ\text{C}$, Error: $0.002604^\circ\text{C}$ ($0.0065\%$) | **PASS** |
 | **TC-23** | `calculus.py` | `average_temperature` vs SymPy exact ($n=400$) | Asymptotic double integral precision | Value: $40.264341^\circ\text{C}$, Error: $0.000104^\circ\text{C}$ ($0.0003\%$) | **PASS** |
 | **TC-24** | Notebook | `notebooks/colab_backup.ipynb` top to bottom | Runs all cells in clean kernel without error | All 9 code cells ran cleanly, plots rendered | **PASS** |
+| **TC-25** | `app.py` | Model switching & parameter customization (A <-> B, negative temperatures) | Reruns top-to-bottom with updated parameters | Models switched and updated without error | **PASS** |
+| **TC-26** | `app.py` | Bad lookup coordinates ($x < 0, x > L, y < 0, y > L$) | Display warning banner, suppress calculus evaluation | Amber warning displayed, zero crash | **PASS** |
+| **TC-27** | `app.py` | Chip relocation from hotspot peak $(2.0, 2.0)$ | Stays at peak ($\nabla T \approx 0$), cooling $0.00^\circ\text{C}$ | Chip stayed at peak, trajectory plotted cleanly | **PASS** |
+| **TC-28** | `app.py` | Chip relocation from plate corner $(0.0, 0.0)$ | Clamps inside safe plate margins $[0.2, L-0.2]$ | Clamped to safe margins, cooling achieved | **PASS** |
+| **TC-29** | `app.py` | Chip start position outside plate ($x > L, y > L$) | Display warning banner, avoid invalid steps | Warning displayed, zero crash | **PASS** |
+| **TC-30** | `app.py` | CSV Report Download button | Generates in-memory CSV via pandas | Download button rendered with valid CSV payload | **PASS** |
 
 ---
 
@@ -146,7 +152,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
    - *Reason*: This preserves truthful recording of the chip's actual initial placement while preventing the physical chip from traveling outside safe margins during movement.
 2. **Blocking Console Matplotlib Plots**:
    - *Behavior*: In `plots.py`, calling `plt.show()` pauses the console until the user closes the figure window.
-   - *Reason*: Standard Matplotlib interactive behaviour for console programs without custom GUI event loop integration.
+   - *Reason*: Standard Matplotlib interactive behaviour for console programs. In the Streamlit web app, show=False returns the figure directly.
 
 ---
 

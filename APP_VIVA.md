@@ -9,7 +9,7 @@
 **Answer**: Streamlit allows writing pure top-to-bottom Python scripts without HTML, CSS, JavaScript, callback boilerplate, or object-oriented GUI hierarchies. Unlike Tkinter (which is desktop-only and cannot run in a browser or cloud container), Streamlit deploys seamlessly to the cloud. Compared to Flask/Django, it eliminates routing tables and template engines while providing native, reactive widgets.
 
 ### Q2. How does Streamlit's execution model work when a user moves a slider or inputs a number?
-**Answer**: Streamlit uses an immediate-mode reactive execution lifecycle. Every time a user interacts with a widget (changing a value or clicking a button), Streamlit re-executes the entire `app.py` script from top to bottom (line 1 to line 71) using the updated widget states.
+**Answer**: Streamlit uses an immediate-mode reactive execution lifecycle. Every time a user interacts with a widget (changing a value or clicking a button), Streamlit re-executes the entire `app.py` script from top to bottom (line 1 to line 74) using the updated widget states.
 
 ### Q3. How does the web interface mathematically prevent division by zero or non-physical plate parameters?
 **Answer**: By enforcing minimum bounds directly in the widget definitions: `min_value=0.1` for dispersion parameter $s$ and `min_value=1.0` for plate side length $L$. Because Streamlit's `st.number_input` restricts user entry to $\ge \text{min\_value}$, neither $s$ nor $L$ can ever be zero or negative, completely preventing `ZeroDivisionError`.

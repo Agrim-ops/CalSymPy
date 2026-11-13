@@ -5,8 +5,8 @@ import models
 import calculus
 import plots
 
-st.title("CalSymPy - Heat Distribution")
-st.write("First-year multivariable calculus tools for temperature on a square plate.")
+st.title("CalSymPy - Plate Heat Map")
+st.write("Check temperatures, slopes, and cooling paths on a square plate.")
 
 # Sidebar model and parameter controls
 st.sidebar.header("Plate Settings")
@@ -14,19 +14,19 @@ model = st.sidebar.selectbox("Choose Model", ["A", "B"])
 plate = models.Plate(model)
 
 if model == "A":
-    plate.L = st.sidebar.slider("L (plate size)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
-    plate.t_edge = st.sidebar.slider("T_edge (deg C)", min_value=0.0, max_value=100.0, value=25.0, step=1.0)
-    plate.t0 = st.sidebar.slider("T0 (peak rise)", min_value=0.0, max_value=150.0, value=60.0, step=1.0)
-    plate.s = st.sidebar.slider("s (dispersion)", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
-    plate.cx = st.sidebar.slider("cx (center x)", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
-    plate.cy = st.sidebar.slider("cy (center y)", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
+    plate.L = st.sidebar.slider("Plate size L", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+    plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=15.0, step=1.0)
+    plate.t0 = st.sidebar.slider("Hotspot heat T0", min_value=0.0, max_value=150.0, value=60.0, step=1.0)
+    plate.s = st.sidebar.slider("Hotspot width s", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
+    plate.cx = st.sidebar.slider("Hotspot center x", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
+    plate.cy = st.sidebar.slider("Hotspot center y", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
 else:
-    plate.L = st.sidebar.slider("L (plate size)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
-    plate.t_edge = st.sidebar.slider("T_edge (deg C)", min_value=0.0, max_value=100.0, value=20.0, step=1.0)
-    plate.t0 = st.sidebar.slider("T0 (peak rise)", min_value=0.0, max_value=150.0, value=50.0, step=1.0)
+    plate.L = st.sidebar.slider("Plate size L", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+    plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=15.0, step=1.0)
+    plate.t0 = st.sidebar.slider("Hotspot heat T0", min_value=0.0, max_value=150.0, value=50.0, step=1.0)
 
 # Heat map display
-st.subheader("Temperature Heat Map")
+st.subheader("Plate Heat Map")
 fig = plots.plot_heatmap(plate, show=False)
 st.pyplot(fig)
 
@@ -35,26 +35,26 @@ st.subheader("Plate Summary")
 hx, hy, ht = calculus.find_hottest_point(plate)
 risk = calculus.get_risk_level(ht)
 avg_t = calculus.average_temperature(plate)
-st.write("Hottest point: (" + str(round(hx, 2)) + ", " + str(round(hy, 2)) + ") at " + str(round(ht, 2)) + " deg C (" + risk + " risk)")
-st.write("Average plate temperature: " + str(round(avg_t, 2)) + " deg C")
+st.write("Hottest point: (" + str(round(hx, 2)) + ", " + str(round(hy, 2)) + ") at " + str(round(ht, 2)) + " C (" + risk + " risk)")
+st.write("Average plate temperature: " + str(round(avg_t, 2)) + " C")
 
 # Point lookup and second derivative test
-st.subheader("Point Lookup")
-px = st.number_input("x coordinate (cm)", value=2.0)
-py = st.number_input("y coordinate (cm)", value=2.0)
+st.subheader("Check a Point")
+px = st.number_input("x position (cm)", value=2.0)
+py = st.number_input("y position (cm)", value=2.0)
 if px < 0.0 or px > plate.L or py < 0.0 or py > plate.L:
-    st.warning("Point is outside the plate (0 to " + str(plate.L) + ")!")
+    st.warning("That point is outside the plate (0 to " + str(plate.L) + ")!")
 else:
     t = plate.get_temp(px, py)
     tx, ty, mag = calculus.gradient(plate, px, py)
     txx, tyy, txy, d, res = calculus.second_derivative_test(plate, px, py)
-    st.write("Temperature: " + str(round(t, 2)) + " deg C")
-    st.write("Gradient: Tx = " + str(round(tx, 3)) + ", Ty = " + str(round(ty, 3)) + " (magnitude: " + str(round(mag, 3)) + " deg C/cm)")
-    st.write("Curvature: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
-    st.write("Discriminant D = " + str(round(d, 2)) + " (" + res + ")")
+    st.write("Temperature: " + str(round(t, 2)) + " C")
+    st.write("Gradient: Tx = " + str(round(tx, 3)) + ", Ty = " + str(round(ty, 3)) + " (slope = " + str(round(mag, 3)) + " C/cm)")
+    st.write("Second partials: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
+    st.write("Hessian D = " + str(round(d, 2)) + " (" + res + ")")
 
 # Chip cooling via gradient descent
-st.subheader("Chip Cooling")
+st.subheader("Cool Down a Chip")
 cx0 = st.number_input("Start chip x (cm)", value=1.5)
 cy0 = st.number_input("Start chip y (cm)", value=1.5)
 if st.button("Move chip"):
@@ -62,8 +62,8 @@ if st.button("Move chip"):
         st.warning("Chip start position is outside the plate (0 to " + str(plate.L) + ")!")
     else:
         path, final_t = calculus.gradient_descent(plate, cx0, cy0)
-        st.write("Final chip position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
-        st.write("Final chip temperature: " + str(round(final_t, 2)) + " deg C")
+        st.write("New position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
+        st.write("New temperature: " + str(round(final_t, 2)) + " C")
         fig_d = plots.plot_descent_path(plate, path, show=False)
         st.pyplot(fig_d)
 

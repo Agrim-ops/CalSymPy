@@ -33,29 +33,29 @@ st.write("First-year multivariable calculus tools for temperature on a square pl
 ```
 - **Explanation**: Renders the main web page title and a one-line description of the tool at the top of the browser view.
 
-### Lines 11–26: Sidebar Model and Parameter Inputs
+### Lines 11–26: Sidebar Model and Parameter Sliders
 ```python
 st.sidebar.header("Plate Settings")
 model = st.sidebar.selectbox("Choose Model", ["A", "B"])
 plate = models.Plate(model)
 
 if model == "A":
-    plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=25.0)
-    plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=60.0)
-    plate.s = max(0.1, st.sidebar.number_input("s (dispersion)", value=2.0, min_value=0.1))
-    plate.cx = st.sidebar.number_input("cx (center x)", value=2.0)
-    plate.cy = st.sidebar.number_input("cy (center y)", value=2.0)
-    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
+    plate.L = st.sidebar.slider("L (plate size)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+    plate.t_edge = st.sidebar.slider("T_edge (deg C)", min_value=0.0, max_value=100.0, value=25.0, step=1.0)
+    plate.t0 = st.sidebar.slider("T0 (peak rise)", min_value=0.0, max_value=150.0, value=60.0, step=1.0)
+    plate.s = st.sidebar.slider("s (dispersion)", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
+    plate.cx = st.sidebar.slider("cx (center x)", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
+    plate.cy = st.sidebar.slider("cy (center y)", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
 else:
-    plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=20.0)
-    plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=50.0)
-    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
+    plate.L = st.sidebar.slider("L (plate size)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+    plate.t_edge = st.sidebar.slider("T_edge (deg C)", min_value=0.0, max_value=100.0, value=20.0, step=1.0)
+    plate.t0 = st.sidebar.slider("T0 (peak rise)", min_value=0.0, max_value=150.0, value=50.0, step=1.0)
 ```
 - **Explanation**: Creates controls in the left collapsible sidebar.
   - `st.sidebar.selectbox` lets the user choose between Model A (Gaussian hotspot) and Model B (sine plate).
   - An instance of `Plate(model)` is created.
-  - Parameter inputs for $T_{\text{edge}}$, $T_0$, $L$, and Model A specifics ($s, c_x, c_y$) are bound directly to `plate` attributes.
-  - Enforces sensible physical constraints: `min_value=0.1` and `max(0.1, ...)` for dispersion $s$, and `min_value=1.0` and `max(1.0, ...)` for plate size $L$ to mathematically prevent division by zero.
+  - Parameter sliders for $T_{\text{edge}}$, $T_0$, $L$, and Model A specifics ($s, c_x, c_y$) are bound directly to `plate` attributes.
+  - Enforces sensible physical constraints via slider bounds: `min_value=0.1` for dispersion $s$, and `min_value=1.0` for plate size $L$ to mathematically prevent division by zero.
 
 ### Lines 28–31: Main Temperature Heat Map
 ```python

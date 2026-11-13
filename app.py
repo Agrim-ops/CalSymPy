@@ -14,16 +14,16 @@ model = st.sidebar.selectbox("Choose Model", ["A", "B"])
 plate = models.Plate(model)
 
 if model == "A":
-    plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=25.0)
-    plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=60.0)
-    plate.s = max(0.1, st.sidebar.number_input("s (dispersion)", value=2.0, min_value=0.1))
-    plate.cx = st.sidebar.number_input("cx (center x)", value=2.0)
-    plate.cy = st.sidebar.number_input("cy (center y)", value=2.0)
-    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
+    plate.L = st.sidebar.slider("L (plate size)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+    plate.t_edge = st.sidebar.slider("T_edge (deg C)", min_value=0.0, max_value=100.0, value=25.0, step=1.0)
+    plate.t0 = st.sidebar.slider("T0 (peak rise)", min_value=0.0, max_value=150.0, value=60.0, step=1.0)
+    plate.s = st.sidebar.slider("s (dispersion)", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
+    plate.cx = st.sidebar.slider("cx (center x)", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
+    plate.cy = st.sidebar.slider("cy (center y)", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
 else:
-    plate.t_edge = st.sidebar.number_input("T_edge (deg C)", value=20.0)
-    plate.t0 = st.sidebar.number_input("T0 (peak rise)", value=50.0)
-    plate.L = max(1.0, st.sidebar.number_input("L (plate size)", value=4.0, min_value=1.0))
+    plate.L = st.sidebar.slider("L (plate size)", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+    plate.t_edge = st.sidebar.slider("T_edge (deg C)", min_value=0.0, max_value=100.0, value=20.0, step=1.0)
+    plate.t0 = st.sidebar.slider("T0 (peak rise)", min_value=0.0, max_value=150.0, value=50.0, step=1.0)
 
 # Heat map display
 st.subheader("Temperature Heat Map")

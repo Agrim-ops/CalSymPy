@@ -12,14 +12,19 @@ CalSymPy is a clean, explainable first-year engineering mathematics project mode
   - Linearisation (tangent plane) and quadratic Taylor approximation
   - Downhill gradient descent to relocate heat-sensitive components
   - Grid search for hottest point and silicon thermal risk level
-- **Console Interface**: Interactive console menu in `main.py`.
+- **Interfaces**:
+  - **Web Application**: Lightweight Streamlit UI in `app.py` (`streamlit run app.py`). See `APP_NOTES.md` and `DEPLOY.md`.
+  - **Console Interface**: Interactive console menu in `main.py` (`python main.py`).
 
-> **Note on Graphical User Interface (GUI)**:
-> A desktop Tkinter GUI was prototyped in previous explorations; graphical interface integration is planned as future scope. The current core project focuses strictly on lightweight, fully explainable console and notebook workflows.
-
-## Running Tests
+## Running the Application & Tests
 ```bash
+# Run unit tests and symbolic checks
 python check_with_sympy.py
 python test_calculus.py
+
+# Launch web UI
+streamlit run app.py
+
+# Launch console interface
 python main.py
 ```

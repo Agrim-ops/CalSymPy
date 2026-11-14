@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 # Visualizes 2D temperature field with heatmap and contours
 def plot_heatmap(plate, n_grid=50, show=True):
     xs = np.linspace(0.0, plate.L, n_grid)
-    X, Y = np.meshgrid(xs, xs)
+    x_grid, y_grid = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
-    im = plt.imshow(plate.get_temp(X, Y), origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
+    im = plt.imshow(plate.get_temp(x_grid, y_grid), origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
     plt.colorbar(im, label="Temperature (deg C)")
-    plt.contour(X, Y, plate.get_temp(X, Y), colors="white", linewidths=0.5)
+    plt.contour(x_grid, y_grid, plate.get_temp(x_grid, y_grid), colors="white", linewidths=0.5)
     plt.title("Temperature Map: Model " + plate.model)
     plt.xlabel("x (cm)")
     plt.ylabel("y (cm)")
@@ -21,9 +21,9 @@ def plot_heatmap(plate, n_grid=50, show=True):
 # Plots gradient descent cooling path over temperature map
 def plot_descent_path(plate, path, n_grid=50, show=True):
     xs = np.linspace(0.0, plate.L, n_grid)
-    X, Y = np.meshgrid(xs, xs)
+    x_grid, y_grid = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
-    plt.imshow(plate.get_temp(X, Y), origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
+    plt.imshow(plate.get_temp(x_grid, y_grid), origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
     px, py = [], []
     for pt in path:
         px.append(pt[0])

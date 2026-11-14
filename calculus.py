@@ -45,7 +45,7 @@ def taylor_degree_2(plate, a, b, x, y):
 def gradient_descent(plate, start_x, start_y, step_size=0.08, steps=30):
     curr_x, curr_y = start_x, start_y
     path = [(curr_x, curr_y)]
-    for step in range(steps):
+    for _ in range(steps):
         tx, ty = plate.get_grad(curr_x, curr_y)
         curr_x = max(0.2, min(plate.L - 0.2, curr_x - step_size * tx))
         curr_y = max(0.2, min(plate.L - 0.2, curr_y - step_size * ty))

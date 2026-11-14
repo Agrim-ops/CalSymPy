@@ -25,6 +25,7 @@ All formulas are evaluated in plain algebraic form:
 - **Double Integral**: The average temperature is computed via `(1 / Area) * iint T(x, y) dA` over the region `[0, L] x [0, L]`, evaluated using a 2D midpoint Riemann sum.
 - **Tangent Plane and Taylor Polynomial**: The tangent plane gives the linear approximation `L(x, y) = T(a, b) + Tx*(x - a) + Ty*(y - b)` near `(a, b)`. The degree-2 Taylor polynomial adds the quadratic curvature terms `0.5*Txx*(dx^2) + Txy*dx*dy + 0.5*Tyy*(dy^2)`.
 - **Gradient Descent**: Moves a chip downhill away from heat along the negative gradient direction `(-Tx, -Ty)` in discrete steps, keeping coordinates within plate boundaries.
+- **Cooling Suggestion Box**: Suggests targeted thermal reduction steps (lowering T0 or T_edge, adding a heat sink or fan, or moving parts) to return elevated temperatures to safe levels.
 
 ## How to Run
 

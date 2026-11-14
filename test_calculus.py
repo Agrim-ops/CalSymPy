@@ -38,4 +38,13 @@ assert final_t < plate_a.get_temp(1.5, 1.5)
 hx, hy, ht = calculus.find_hottest_point(plate_a, n_grid=40)
 assert abs(hx - 2.0) < 0.15 and abs(hy - 2.0) < 0.15 and abs(ht - 85.0) < 0.2
 assert calculus.get_risk_level(50.0) == "Low" and calculus.get_risk_level(75.0) == "Medium" and calculus.get_risk_level(95.0) == "High"
+
+# 7. Cooling suggestions
+tips_low = " ".join(calculus.cooling_suggestions(50.0)).lower()
+assert "no action" in tips_low
+tips_med = " ".join(calculus.cooling_suggestions(85.0))
+assert "15.1" in tips_med
+tips_high = " ".join(calculus.cooling_suggestions(100.0)).lower()
+assert "heat sink or fan" in tips_high
+
 print("All calculus tests passed successfully!")

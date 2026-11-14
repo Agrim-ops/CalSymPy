@@ -71,3 +71,20 @@ def get_risk_level(temp):
     if temp <= 90.0:
         return "Medium"
     return "High"
+
+# Cooling suggestions based on peak temperature risk level
+def cooling_suggestions(peak_temp):
+    risk = get_risk_level(peak_temp)
+    tips = []
+    if risk == "Low":
+        tips.append("Temperature is safe; no action needed.")
+    else:
+        drop = round(peak_temp - 69.9, 1)
+        tips.append("Peak temperature must fall by at least " + str(drop) + " deg C to reach Low risk.")
+        tips.append("Option 1: Reduce chip heating T0 by " + str(drop) + " deg C.")
+        tips.append("Option 2: Cool plate edges and surroundings T_edge by " + str(drop) + " deg C.")
+        if risk == "High":
+            tips.append("Add a heat sink or fan to improve heat dissipation.")
+            tips.append("Move heat-sensitive parts away from the hotspot using gradient descent.")
+    return tips
+

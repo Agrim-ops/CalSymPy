@@ -66,6 +66,10 @@ def option_hottest(plate):
     hx, hy, ht = calculus.find_hottest_point(plate, n_grid=60)
     print("Hottest point is at x = " + str(round(hx, 2)) + " cm, y = " + str(round(hy, 2)) + " cm")
     print("Peak temperature: " + str(round(ht, 2)) + " deg C (" + calculus.get_risk_level(ht) + " risk)")
+    print("\nCooling suggestions:")
+    for tip in calculus.cooling_suggestions(ht):
+        print("- " + tip)
+    print("These are simple rules of thumb, not engineering advice.")
 
 # Option 5: Calculate average plate temperature via Riemann sum
 def option_average(plate):

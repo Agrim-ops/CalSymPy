@@ -8,6 +8,11 @@ import plots
 st.title("CalSymPy - Plate Heat Map")
 st.write("Check temperatures, slopes, and cooling paths on a square plate.")
 
+with st.expander("About the models"):
+    st.write("Model A (Gaussian Hotspot): T = T_edge + T0 * exp(-((x-cx)^2 + (y-cy)^2)/s) models a circular hotspot centered at (cx, cy).")
+    st.write("Model B (Sine Plate): T = T_edge + T0 * sin(pi*x/L) * sin(pi*y/L) models a standing wave pinned to T_edge at edges.")
+    st.write("These formulas are idealised shapes we chose, not derived from the heat equation.")
+
 # Sidebar model and parameter controls
 st.sidebar.header("Plate Settings")
 model = st.sidebar.selectbox("Choose Model", ["A", "B"])
@@ -26,13 +31,18 @@ st.subheader("Plate Heat Map")
 fig = plots.plot_heatmap(plate, show=False)
 st.pyplot(fig)
 
-# Plate summary metrics
+# Plate summary metrics and cooling suggestions
 st.subheader("Plate Summary")
 hx, hy, ht = calculus.find_hottest_point(plate)
 risk = calculus.get_risk_level(ht)
 avg_t = calculus.average_temperature(plate)
 st.write("Hottest point: (" + str(round(hx, 2)) + ", " + str(round(hy, 2)) + ") at " + str(round(ht, 2)) + " C (" + risk + " risk)")
 st.write("Average plate temperature: " + str(round(avg_t, 2)) + " C")
+
+st.subheader("Cooling Suggestions")
+for tip in calculus.cooling_suggestions(ht):
+    st.write("- " + tip)
+st.write("These are simple rules of thumb, not engineering advice.")
 
 # Point lookup and second derivative test
 st.subheader("Check a Point")

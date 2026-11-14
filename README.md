@@ -59,8 +59,7 @@ python main.py
 - `check_with_sympy.py`: Verification script comparing analytical derivatives against SymPy symbolic derivatives.
 - `test_calculus.py`: Unit test script checking calculus functions against expected values.
 - `requirements.txt`: Pinned Python dependencies.
-- `runtime.txt`: Python version specification for Render deployment (`python-3.12.10`).
-- `DEPLOY.md`: Deployment instructions for hosting the web app on Render.
+- `DEPLOY.md`: Deployment instructions for hosting the web app on Streamlit Community Cloud.
 - `PSEUDOCODE.md`: Algorithmic pseudocode for all calculus routines.
 - `TEST_REPORT.md`: Test execution results, recorded bugs, and verification logs.
 - `notebooks/colab_backup.ipynb`: Backup notebook runnable on Google Colab.
@@ -72,4 +71,4 @@ python main.py
 - Silicon risk levels (Low < 70 C, Medium 70-90 C, High > 90 C) are empirical thresholds chosen for project demonstration rather than manufacturer specifications.
 
 ## Live Link
-- **Render Web App**: https://calsympy-heat-map.onrender.com
+Live link: (add after deployment)

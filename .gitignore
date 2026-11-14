@@ -4,3 +4,4 @@ __pycache__/
 .venv*/
 report_*.txt
 report_*.csv
+*.pptx

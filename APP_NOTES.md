@@ -8,7 +8,7 @@
 ## 1. What Streamlit Does on Each Rerun
 
 Streamlit operates on an **immediate-mode reactive execution model**:
-1. When the page first loads in a browser, Streamlit executes `app.py` from top to bottom (line 1 to line 74), generating all UI widgets and visualizations.
+1. When the page first loads in a browser, Streamlit executes `app.py` from top to bottom (line 1 to line 70), generating all UI widgets and visualizations.
 2. Whenever the user modifies **any widget** (such as switching the model dropdown, dragging a slider, or entering new coordinates), Streamlit immediately **reruns the entire script from top to bottom** with the new widget values.
 3. Because the calculations in `models.py` and `calculus.py` are purely algebraic and vectorized with NumPy, the full top-to-bottom re-execution completes in a fraction of a second, providing instant visual feedback without complex event listeners or callback registrations.
 
@@ -33,23 +33,19 @@ st.write("Check temperatures, slopes, and cooling paths on a square plate.")
 ```
 - **Explanation**: Renders the main web page title and a one-line description of the tool at the top of the browser view using simple student English.
 
-### Lines 11–26: Sidebar Model and Parameter Sliders
+### Lines 11–22: Sidebar Model and Parameter Sliders
 ```python
 st.sidebar.header("Plate Settings")
 model = st.sidebar.selectbox("Choose Model", ["A", "B"])
 plate = models.Plate(model)
 
+plate.L = st.sidebar.slider("Plate size L", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
+plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=15.0, step=1.0)
+plate.t0 = st.sidebar.slider("Hotspot heat T0", min_value=0.0, max_value=150.0, value=60.0 if model == "A" else 50.0, step=1.0)
 if model == "A":
-    plate.L = st.sidebar.slider("Plate size L", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
-    plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=15.0, step=1.0)
-    plate.t0 = st.sidebar.slider("Hotspot heat T0", min_value=0.0, max_value=150.0, value=60.0, step=1.0)
     plate.s = st.sidebar.slider("Hotspot width s", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
     plate.cx = st.sidebar.slider("Hotspot center x", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
     plate.cy = st.sidebar.slider("Hotspot center y", min_value=0.0, max_value=plate.L, value=2.0, step=0.1)
-else:
-    plate.L = st.sidebar.slider("Plate size L", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
-    plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=15.0, step=1.0)
-    plate.t0 = st.sidebar.slider("Hotspot heat T0", min_value=0.0, max_value=150.0, value=50.0, step=1.0)
 ```
 - **Explanation**: Creates controls in the left collapsible sidebar.
   - `st.sidebar.selectbox` lets the user choose between Model A (Gaussian hotspot) and Model B (sine plate).
@@ -57,7 +53,7 @@ else:
   - Parameter sliders for $T_{\text{edge}}$, $T_0$, $L$, and Model A specifics ($s, c_x, c_y$) are bound directly to `plate` attributes with reduced default edge temp ($15.0$).
   - Enforces sensible physical constraints via slider bounds: `min_value=0.1` for dispersion $s$, and `min_value=1.0` for plate size $L$ to mathematically prevent division by zero.
 
-### Lines 28–31: Main Temperature Heat Map
+### Lines 24–27: Main Temperature Heat Map
 ```python
 st.subheader("Plate Heat Map")
 fig = plots.plot_heatmap(plate, show=False)
@@ -65,7 +61,7 @@ st.pyplot(fig)
 ```
 - **Explanation**: Calls `plot_heatmap(plate, show=False)` in `plots.py`. Passing `show=False` suppresses the blocking local desktop window `plt.show()` and instead returns the Matplotlib `Figure` object, which `st.pyplot(fig)` renders inline inside the web page.
 
-### Lines 33–39: Plate Summary Metrics
+### Lines 29–35: Plate Summary Metrics
 ```python
 st.subheader("Plate Summary")
 hx, hy, ht = calculus.find_hottest_point(plate)
@@ -80,7 +76,7 @@ st.write("Average plate temperature: " + str(round(avg_t, 2)) + " C")
   - `average_temperature(plate)`: Double integral evaluated via a 2D midpoint Riemann sum ($80 \times 80$ subdivisions).
   - Displays formatted summary strings.
 
-### Lines 41–55: Point Lookup and Second Derivative Test
+### Lines 37–51: Point Lookup and Second Derivative Test
 ```python
 st.subheader("Check a Point")
 px = st.number_input("x position (cm)", value=2.0)
@@ -100,7 +96,7 @@ else:
   - Validates coordinates: if $x$ or $y$ is outside $[0, L]$, shows an amber warning banner.
   - Otherwise, evaluates analytical temperature $T(x, y)$, gradient slopes $\nabla T = \langle T_x, T_y \rangle$, gradient magnitude $|\nabla T|$, second partial derivatives ($T_{xx}, T_{yy}, T_{xy}$), and Hessian discriminant $D = T_{xx}T_{yy} - T_{xy}^2$ with classification (Local Maximum, Minimum, Saddle Point, or Inconclusive).
 
-### Lines 57–69: Chip Cooling via Gradient Descent
+### Lines 53–65: Chip Cooling via Gradient Descent
 ```python
 st.subheader("Cool Down a Chip")
 cx0 = st.number_input("Start chip x (cm)", value=1.5)
@@ -120,7 +116,7 @@ if st.button("Move chip"):
   - Calls `calculus.gradient_descent(plate, cx0, cy0)`, which steps along the negative gradient $-\nabla T$ for 30 iterations while clamping to physical plate margins.
   - Displays final position, cooled temperature, and plots the trajectory overlay on the thermal heatmap.
 
-### Lines 71–74: Downloadable Engineering Report
+### Lines 67–70: Downloadable Engineering Report
 ```python
 metrics = ["Model", "Plate Size L", "T_edge", "T0", "Hottest X", "Hottest Y", "Peak Temp", "Risk Level", "Average Temp"]
 values = [plate.model, plate.L, plate.t_edge, plate.t0, round(hx, 2), round(hy, 2), round(ht, 2), risk, round(avg_t, 2)]

@@ -2,11 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Why this exists: Visualizes 2D temperature field using a false-color heatmap and white contour lines
+# Visualizes 2D temperature field with heatmap and contours
 def plot_heatmap(plate, n_grid=50, show=True):
     xs = np.linspace(0.0, plate.L, n_grid)
-    ys = np.linspace(0.0, plate.L, n_grid)
-    X, Y = np.meshgrid(xs, ys)
+    X, Y = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
     im = plt.imshow(plate.get_temp(X, Y), origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
     plt.colorbar(im, label="Temperature (deg C)")
@@ -19,11 +18,10 @@ def plot_heatmap(plate, n_grid=50, show=True):
         plt.show()
     return fig
 
-# Why this exists: Plots the gradient descent cooling path over the temperature map from start to final position
+# Plots gradient descent cooling path over temperature map
 def plot_descent_path(plate, path, n_grid=50, show=True):
     xs = np.linspace(0.0, plate.L, n_grid)
-    ys = np.linspace(0.0, plate.L, n_grid)
-    X, Y = np.meshgrid(xs, ys)
+    X, Y = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
     plt.imshow(plate.get_temp(X, Y), origin="lower", extent=[0, plate.L, 0, plate.L], cmap="inferno")
     px, py = [], []

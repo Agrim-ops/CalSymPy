@@ -1,75 +1,96 @@
-# CalSymPy
+# Using Partial Derivatives and Matplotlib in Python to Visualize Heat Distribution on a Surface
 
-**Course**: MAT 112 Engineering Mathematics & Python  
-**Team**: Team 4 (Delta-T)  
-- Agrim Goel - Mathematics & Model Derivation  
-- Team 4 Members - Numerical Algorithms, Interfaces, Testing & Documentation  
+Team 4 (Delta-T), Mathematics and Python Programming  
+CalSymPy project
 
-## Description
-CalSymPy calculates and visualises steady-state 2D temperature distributions on a flat square plate. It evaluates partial derivatives to compute temperature gradients, slopes, and surface curvature classifications. The program also estimates average plate temperature using double integration and simulates moving a heat-sensitive chip downhill along the negative gradient to cool it down. Both a terminal console interface and a browser-based web application are provided.
+## What this project does
 
-## Thermal Models
-All formulas are evaluated in plain algebraic form:
+This program models how temperature is spread over a flat square plate, for example a circuit board with a chip on it. It uses calculus to find the hottest point, the direction heat changes fastest, the average temperature, and a better place to put a heat-sensitive part. It shows the results as heat maps and also gives simple cooling suggestions. The temperature depends only on position (x, y), so there is no time variable.
 
-1. **Model A (Gaussian Hotspot)**:
-   `T(x, y) = T_edge + T0 * exp(-((x - cx)^2 + (y - cy)^2) / s)`  
-   Represents a localised hotspot centered at `(cx, cy)` with peak temperature rise `T0`, dispersion width `s`, and base edge temperature `T_edge`.
+## Team
 
-2. **Model B (Sine Plate)**:
-   `T(x, y) = T_edge + T0 * sin(pi * x / L) * sin(pi * y / L)`  
-   Represents a sinusoidal standing thermal distribution on a plate of side length `L`, where temperature is `T_edge` along all boundaries and peaks at the center `(L/2, L/2)`.
+| Member | Role |
+| --- | --- |
+| Anvesha Misra | Project Manager |
+| Swastik Mishra | Researcher |
+| Manvi Singh | Mathematical Modeler |
+| Advitiya Sharma | Pseudocode Formulator |
+| Tanmay Singh | Code Developer |
+| Agrim Goel | Program Deployer and Tester |
+| Pari Raj | Information Analyst |
 
-## Calculus Used
-- **Partial Derivatives and Gradient**: First-order partial derivatives `Tx = dT/dx` and `Ty = dT/dy` form the gradient vector `<Tx, Ty>`, pointing in the direction of steepest temperature increase. The gradient magnitude `sqrt(Tx^2 + Ty^2)` gives the maximum slope in deg C/cm.
-- **Second Derivative Test**: Second-order partial derivatives `Txx`, `Tyy`, and mixed partial `Txy` form the Hessian discriminant `D = Txx * Tyy - Txy^2`. Points with `D > 0` and `Txx < 0` are local maxima (hotspots), `D > 0` and `Txx > 0` are local minima, and `D < 0` are saddle points.
-- **Double Integral**: The average temperature is computed via `(1 / Area) * iint T(x, y) dA` over the region `[0, L] x [0, L]`, evaluated using a 2D midpoint Riemann sum.
-- **Tangent Plane and Taylor Polynomial**: The tangent plane gives the linear approximation `L(x, y) = T(a, b) + Tx*(x - a) + Ty*(y - b)` near `(a, b)`. The degree-2 Taylor polynomial adds the quadratic curvature terms `0.5*Txx*(dx^2) + Txy*dx*dy + 0.5*Tyy*(dy^2)`.
-- **Gradient Descent**: Moves a chip downhill away from heat along the negative gradient direction `(-Tx, -Ty)` in discrete steps, keeping coordinates within plate boundaries.
-- **Cooling Suggestion Box**: Suggests targeted thermal reduction steps (lowering T0 or T_edge, adding a heat sink or fan, or moving parts) to return elevated temperatures to safe levels.
+## The two models
 
-## How to Run
+The plate has side length L = 4 cm. Both models are fixed formulas that we chose to give realistic shapes. They are not solutions of the heat equation.
 
-Activate the virtual environment first (or use the `.venv` path directly):
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
+Model A (single hotspot): one chip at (cx, cy) heats the area around it.
 
-### 1. Run Tests
-```bash
-python check_with_sympy.py
-python test_calculus.py
-```
+    T(x, y) = T_edge + T0 * exp(-((x - cx)^2 + (y - cy)^2) / s)
 
-### 2. Run the Web Application
-```bash
-streamlit run app.py
-```
-*(Or without activating: `.\.venv\Scripts\python.exe -m streamlit run app.py`)*
+Default values: T_edge = 25, T0 = 60, s = 2, cx = cy = 2. The peak is 85 degrees C at (2, 2).
 
-### 3. Run the Console Interface
-```bash
-python main.py
-```
+Model B (cold edges): the edges are kept at T_edge and the plate is hottest in the middle.
 
-## Project Files
-- `models.py`: Temperature formulas, analytical partial derivatives, and `Plate` class.
-- `calculus.py`: Multivariable calculus algorithms (gradient, second derivative test, Riemann sum, tangent plane, Taylor polynomial, gradient descent).
-- `plots.py`: Matplotlib plotting routines for temperature heatmap and gradient descent path.
-- `main.py`: Console menu interface for terminal use.
-- `app.py`: Streamlit web interface with interactive sliders, point lookup, cooling simulation, and CSV export.
-- `check_with_sympy.py`: Verification script comparing analytical derivatives against SymPy symbolic derivatives.
-- `test_calculus.py`: Unit test script checking calculus functions against expected values.
-- `requirements.txt`: Pinned Python dependencies.
-- `DEPLOY.md`: Deployment instructions for hosting the web app on Streamlit Community Cloud.
-- `PSEUDOCODE.md`: Algorithmic pseudocode for all calculus routines.
-- `TEST_REPORT.md`: Test execution results, recorded bugs, and verification logs.
-- `notebooks/colab_backup.ipynb`: Backup notebook runnable on Google Colab.
-- `.gitignore`: Untracked file rules for local environments.
+    T(x, y) = T_edge + T0 * sin(pi*x/L) * sin(pi*y/L)
+
+Default values: T_edge = 20, T0 = 50. The peak is 70 degrees C at (2, 2).
+
+## Calculus used
+
+- Partial derivatives Tx and Ty, and the gradient vector with its magnitude. The gradient points in the direction where temperature rises fastest.
+- Second partial derivatives Txx, Tyy and Txy, and the second derivative test D = Txx * Tyy - Txy^2. D > 0 with Txx < 0 is a maximum, D > 0 with Txx > 0 is a minimum, D < 0 is a saddle point, and D = 0 is inconclusive.
+- Double integral for the average temperature, calculated with a midpoint Riemann sum.
+- Tangent plane (linear approximation) and a degree 2 Taylor polynomial around a point.
+- Gradient descent: a chip is moved step by step in the direction of -gradient so it ends up in a cooler place.
+
+All derivatives are worked out by hand and written as formulas in models.py. SymPy is used only in check_with_sympy.py to confirm the hand formulas.
+
+## Risk level and cooling suggestions
+
+The peak temperature is classified as Low (below 70 degrees C), Medium (70 to 90) or High (above 90). These limits are our own choice, so they are only rules of thumb. For Medium and High, the program says how many degrees the peak must drop to reach Low and lists simple options such as reducing the chip heating, cooling the edges, adding a heat sink or fan, or moving the part. This is a set of if/else rules, not engineering advice.
+
+## How to run
+
+Install the libraries:
+
+    pip install -r requirements.txt
+
+Console version:
+
+    python main.py
+
+Web version:
+
+    streamlit run app.py
+
+Checks:
+
+    python check_with_sympy.py
+    python test_calculus.py
+
+Live link: (add after deployment)
+
+## Files
+
+- models.py: the two temperature models, their hand-derived derivatives, and the Plate class
+- calculus.py: gradient, second derivative test, average temperature, tangent plane, Taylor polynomial, gradient descent, hottest point search, risk level, cooling suggestions
+- plots.py: heat map and gradient descent plots with Matplotlib
+- main.py: console menu
+- app.py: Streamlit web page (a thin layer on top of the same functions)
+- check_with_sympy.py: compares hand derivatives with SymPy
+- test_calculus.py: tests with assert statements
+- PSEUDOCODE.md: pseudo-code for the main algorithms
+- TEST_REPORT.md: tests we ran and the bugs found and fixed
+- DEPLOY.md: how the web app was deployed
+- notebooks/colab_backup.ipynb: backup copy that runs on Google Colab
+
+## Libraries
+
+NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used only for the web page.
 
 ## Limitations
-- The plate is assumed to be an idealised flat 2D square with uniform physical properties.
-- The equations model steady-state temperature only; transient time-dependent heat transfer is not modeled.
-- Silicon risk levels (Low < 70 C, Medium 70-90 C, High > 90 C) are empirical thresholds chosen for project demonstration rather than manufacturer specifications.
 
-## Live Link
-Live link: (add after deployment)
+- The plate is a simple, flat, uniform square and the temperature is steady (it does not change with time).
+- The two models are idealised shapes and have not been compared with real measurements.
+- The risk limits and the cooling advice are our own simple rules.
+- The average temperature is an approximation and gets more accurate when more steps are used.

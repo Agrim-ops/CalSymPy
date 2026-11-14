@@ -28,6 +28,11 @@ All formulas are evaluated in plain algebraic form:
 
 ## How to Run
 
+Activate the virtual environment first (or use the `.venv` path directly):
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
 ### 1. Run Tests
 ```bash
 python check_with_sympy.py
@@ -38,6 +43,7 @@ python test_calculus.py
 ```bash
 streamlit run app.py
 ```
+*(Or without activating: `.\.venv\Scripts\python.exe -m streamlit run app.py`)*
 
 ### 3. Run the Console Interface
 ```bash

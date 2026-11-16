@@ -4,12 +4,18 @@ import models
 import calculus
 import plots
 
-# Displays console menu options
+# Prints the numbered options menu for the interactive console.
+# Inputs: none.
+# Outputs: none (prints menu list to terminal).
+# Displays choices 0 to 7 for all available program features.
 def show_menu():
     print("\n--- CalSymPy Menu ---")
     print("1. Model & params\n2. Heat map\n3. Point lookup\n4. Hottest point\n5. Average temp\n6. Gradient descent\n7. Save report\n0. Quit")
 
-# Prompts for a parameter, keeping current if empty, and validates positivity
+# Prompts user for a numerical parameter and validates positive bounds.
+# Inputs: parameter name string and current default value.
+# Output: updated float value, or current value if input is empty/invalid.
+# Enforces strictly positive values for plate size L and hotspot width s.
 def ask_param(name, current_val):
     val = input("Enter " + name + " (current " + str(current_val) + "): ").strip()
     if val == "":
@@ -24,7 +30,10 @@ def ask_param(name, current_val):
         print("Invalid number. Keeping " + str(current_val))
         return current_val
 
-# Option 1: Switch model and update parameters
+# Handles menu option 1 to switch thermal models and modify parameters.
+# Inputs: active plate object.
+# Outputs: none (modifies plate attributes in place).
+# Lets user switch between Model A and Model B and update parameters.
 def option_choose_model(plate):
     print("\nCurrent model is:", plate.model)
     m = input("Choose model (A: single hotspot, B: sine plate): ").strip().upper()
@@ -40,7 +49,10 @@ def option_choose_model(plate):
             plate.cy = ask_param("cy", plate.cy)
         plate.L = ask_param("L", plate.L)
 
-# Option 3: Compute temperature, gradient, and Hessian D-test at a point
+# Handles menu option 3 to look up temperature and derivatives at a point.
+# Inputs: active plate object.
+# Outputs: none (prints point metrics and D-test classification).
+# Validates bounds (0 to L) and computes T, gradient, Hessian, and D.
 def option_lookup(plate):
     try:
         x_in = float(input("Enter x coordinate (0 to " + str(plate.L) + "): ").strip())
@@ -60,7 +72,10 @@ def option_lookup(plate):
     print("Second partials: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
     print("Discriminant D: " + str(round(d, 2)) + " (" + result + ")")
 
-# Option 4: Find peak temperature on plate and risk level
+# Handles menu option 4 to find the peak temperature and cooling suggestions.
+# Inputs: active plate object.
+# Outputs: none (prints peak coordinates, risk level, and suggestions).
+# Uses grid search to find the hotspot and outputs rules-of-thumb advice.
 def option_hottest(plate):
     print("\nSearching grid for hottest point...")
     hx, hy, ht = calculus.find_hottest_point(plate, n_grid=60)
@@ -71,13 +86,19 @@ def option_hottest(plate):
         print("- " + tip)
     print("These are simple rules of thumb, not engineering advice.")
 
-# Option 5: Calculate average plate temperature via Riemann sum
+# Handles menu option 5 to calculate average plate temperature.
+# Inputs: active plate object.
+# Outputs: none (prints estimated average temperature).
+# Evaluates a 2D midpoint Riemann sum over [0, L] x [0, L].
 def option_average(plate):
     print("\nCalculating double integral Riemann sum...")
     avg = calculus.average_temperature(plate, n_steps=80)
     print("Average plate temperature: " + str(round(avg, 2)) + " deg C")
 
-# Option 6: Move chip downhill along negative gradient
+# Handles menu option 6 to simulate downhill chip cooling relocation.
+# Inputs: active plate object.
+# Outputs: none (prints trajectory and optionally plots path).
+# Iteratively steps along the negative gradient vector to cool the chip.
 def option_descent(plate):
     try:
         val_x = input("Enter initial chip x (default 1.5): ").strip()
@@ -98,7 +119,10 @@ def option_descent(plate):
     if input("Show descent path plot? (y/n): ").strip().lower() == "y":
         plots.plot_descent_path(plate, path)
 
-# Option 7: Save summary report to CSV or TXT file
+# Handles menu option 7 to export summary plate metrics to a file.
+# Inputs: active plate object.
+# Outputs: none (writes a CSV or text file to local disk).
+# Exports peak coordinates, risk level, and average temperature with error handling.
 def option_save_report(plate):
     hx, hy, ht = calculus.find_hottest_point(plate, n_grid=50)
     avg_t = calculus.average_temperature(plate, n_steps=60)
@@ -117,7 +141,10 @@ def option_save_report(plate):
     except (IOError, OSError):
         print("Error: Could not save report to " + filename)
 
-# Main application loop
+# Main execution loop displaying the menu and dispatching user choices.
+# Inputs: none.
+# Outputs: none (runs interactive loop until choice 0 is entered).
+# Initializes a Plate object and routes commands to option functions.
 def main():
     plate = models.Plate("A")
     print("Welcome to CalSymPy (MAT 112 Engineering Mathematics & Python)")

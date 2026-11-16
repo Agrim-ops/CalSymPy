@@ -94,3 +94,22 @@ NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used 
 - The two models are idealised shapes and have not been compared with real measurements.
 - The risk limits and the cooling advice are our own simple rules.
 - The average temperature is an approximation and gets more accurate when more steps are used.
+
+## Failure cases
+
+| Case | What could go wrong | What we did | Status |
+| --- | --- | --- | --- |
+| s or L = 0 | Division by zero in formulas (`1/s` or `pi/L`) causing `ZeroDivisionError` | `ask_param()` in `main.py` rejects inputs `<= 0` and keeps current value; `app.py` sliders enforce `min_value=0.1` for `s` and `min_value=1.0` for `L` | Fixed |
+| Letters or empty input | Program crashes with `ValueError` when converting strings to `float` | `ask_param()` catches `ValueError` and falls back to default; empty inputs keep current value; coordinates check catches invalid strings | Fixed |
+| Point outside the plate | Point lookup computes out-of-bounds temperatures beyond the physical plate boundary $[0, L] \times [0, L]$ | `option_lookup()` checks `0 <= x, y <= L` and prints warning; `app.py` displays warning banner | Fixed |
+| Read-only report file | Saving report raises `PermissionError` (subclass of `OSError`) if destination file is locked or read-only | `option_save_report()` wraps file writes in `try ... except (IOError, OSError)` and displays friendly error message | Fixed |
+| D = 0 | Second derivative test cannot determine if critical point is extremum or saddle point | `second_derivative_test()` explicitly falls back to returning `"Inconclusive"` | Fixed |
+| Chip starting at the peak | Chip is already at local maximum where gradient $\nabla T = \langle 0, 0 \rangle$, so descent cannot find a downhill direction | Initial position remains stationary because step vector is zero; in web app default start is set away from center $(1.5, 1.5)$ | Not fixed (limitation) |
+| Large gradient descent step | A huge step size could overshoot or throw coordinates far off the plate | Coordinates in `gradient_descent()` are clamped to safe plate margins $[0.2, L - 0.2]$ on every step | Fixed |
+| Few Riemann sum steps | Small `n_steps` (e.g. 2 or 5) produces coarse Riemann sum discretization error | Default `n_steps` is set to 80 ($80 \times 80 = 6,400$ midpoints), converging within $< 0.01^\circ\text{C}$ of continuous integral | Not fixed (limitation) |
+| Grid-search hottest point accuracy | True peak location falls between discrete grid points, slightly underestimating peak temperature | Grid resolution defaults to $50 \times 50$ or $60 \times 60$ ($dx \approx 0.067\text{ cm}$), keeping error within $\sim 0.1^\circ\text{C}$; theoretical peak is known analytically | Not fixed (limitation) |
+| Gradient descent stopping at plate margin | Downhill descent pushes chip into boundary margin $[0.2, L - 0.2]$, causing repeated stationary steps | Clamping prevents chip from leaving the physical plate, though it stops advancing once boundary margin is reached | Fixed |
+| Unrealistic parameter values | User inputs extreme values (e.g. $T_0 = 10,000^\circ\text{C}$ or $T_{\text{edge}} = -500^\circ\text{C}$ below absolute zero) | `app.py` sliders constrain values to reasonable ranges; CLI allows arbitrary floats (except $s, L \le 0$) | Not fixed (limitation) |
+| Idealised models | Real boards have transient conduction, convection, traces, and non-uniform components | Handled as intentional pedagogical simplification; documented in README and app expander that formulas are idealized shapes | Not fixed (limitation) |
+| Web app asleep or offline | Free cloud tier sleeps after 15 minutes of inactivity; first request takes 45–60s to cold-start | Documented in `DEPLOY.md`; full offline CLI (`python main.py`) and local web server (`streamlit run app.py`) run locally without cloud dependency | Not fixed (limitation) |
+

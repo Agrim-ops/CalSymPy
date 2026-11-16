@@ -98,16 +98,17 @@ This document outlines the core algorithms and flows in CalSymPy in plain, numbe
 5. Assign risk classification "Medium" (elevated thermal stress).
 6. If temperature T is strictly greater than 90 degrees Celsius:
 7. Assign risk classification "High" (exceeds thermal limit, cooling required).
+8. Return assigned risk level.
 
 ---
 
 ## 9. Cooling Suggestions
 1. Receive peak temperature and determine risk classification (Low, Medium, High).
-2. If risk is Low: conclude operating temperature is safe and no action is needed.
-3. If risk is Medium or High: calculate required reduction drop = peak temperature - 69.9.
-4. Suggest Option 1: reduce chip heating power T0 by calculated drop amount.
-5. Suggest Option 2: cool plate boundaries and ambient surroundings T_edge by drop amount.
-6. If risk is High: additionally suggest adding a heat sink or fan for heat dissipation.
-7. If risk is High: recommend relocating sensitive components using gradient descent.
-
-8. Return assigned risk level.
+2. If risk is Low: return single message that temperature is safe and no action is needed.
+3. If risk is Medium or High: compute required drop = round(peak temperature - 69.9, 1).
+4. Add message stating peak must fall by drop amount to reach Low risk.
+5. Suggest Option 1: reduce chip heating power T0 by drop amount.
+6. Suggest Option 2: cool plate boundaries and surroundings T_edge by drop amount.
+7. If risk is High: additionally suggest adding a heat sink or fan to improve heat dissipation.
+8. If risk is High: recommend moving heat-sensitive parts away using gradient descent.
+9. Return list of cooling recommendation sentences.

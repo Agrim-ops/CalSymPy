@@ -1,12 +1,18 @@
 # calculus.py - first-year calculus tools for temperature plate
 import numpy as np
 
-# Gradient vector <Tx, Ty> and slope magnitude
+# Computes the gradient vector and total slope magnitude at a point.
+# Inputs: plate object and point coordinates (x, y).
+# Outputs: tuple (Tx, Ty, magnitude) where magnitude = sqrt(Tx^2 + Ty^2).
+# The gradient points in the direction of steepest temperature increase.
 def gradient(plate, x, y):
     tx, ty = plate.get_grad(x, y)
     return tx, ty, np.sqrt(tx ** 2 + ty ** 2)
 
-# Second derivative test using discriminant D = Txx*Tyy - Txy^2
+# Performs the second derivative test to classify surface curvature at (x, y).
+# Inputs: plate object and coordinates (x, y).
+# Outputs: tuple (Txx, Tyy, Txy, D, classification).
+# Uses discriminant D = Txx * Tyy - Txy^2 to find peaks, valleys, or saddles.
 def second_derivative_test(plate, x, y):
     txx, tyy, txy = plate.get_hessian(x, y)
     d = txx * tyy - (txy ** 2)
@@ -18,7 +24,10 @@ def second_derivative_test(plate, x, y):
         return txx, tyy, txy, d, "Saddle Point"
     return txx, tyy, txy, d, "Inconclusive"
 
-# Average temperature via 2D midpoint Riemann sum over [0, L] x [0, L]
+# Calculates the average plate temperature using a double integral.
+# Inputs: plate object and number of subdivision steps along each axis.
+# Output: average temperature in degrees C over the area [0, L] x [0, L].
+# Approximates (1 / Area) * double_integral(T dA) using a 2D midpoint Riemann sum.
 def average_temperature(plate, n_steps=80):
     dx = plate.L / n_steps
     da, total = dx * dx, 0.0
@@ -28,12 +37,18 @@ def average_temperature(plate, n_steps=80):
             total += plate.get_temp(x, (j + 0.5) * dx) * da
     return total / (plate.L * plate.L)
 
-# Tangent plane linearisation L(x, y) = T(a,b) + Tx*(x-a) + Ty*(y-b)
+# Computes the tangent plane linear approximation of temperature near (a, b).
+# Inputs: plate object, base point (a, b), and evaluation point (x, y).
+# Output: linear approximation temperature L(x, y) in degrees C.
+# Formula: L(x, y) = T(a, b) + Tx * (x - a) + Ty * (y - b).
 def tangent_plane(plate, a, b, x, y):
     tx, ty = plate.get_grad(a, b)
     return plate.get_temp(a, b) + tx * (x - a) + ty * (y - b)
 
-# Second-order Taylor polynomial around (a, b)
+# Computes the second-degree Taylor polynomial approximation around (a, b).
+# Inputs: plate object, base point (a, b), and evaluation point (x, y).
+# Output: quadratic temperature estimate including surface curvature.
+# Adds second partial derivative terms 0.5*Txx*dx^2 + Txy*dx*dy + 0.5*Tyy*dy^2.
 def taylor_degree_2(plate, a, b, x, y):
     tx, ty = plate.get_grad(a, b)
     txx, tyy, txy = plate.get_hessian(a, b)
@@ -41,7 +56,10 @@ def taylor_degree_2(plate, a, b, x, y):
     linear = plate.get_temp(a, b) + tx * dx + ty * dy
     return linear + 0.5 * txx * (dx ** 2) + txy * dx * dy + 0.5 * tyy * (dy ** 2)
 
-# Downhill chip relocation along negative gradient (-Tx, -Ty)
+# Simulates moving a heat-sensitive chip downhill to a cooler location.
+# Inputs: plate object, starting coordinates, step size, and step count.
+# Outputs: tuple (path list, final temperature).
+# Moves repeatedly along the negative gradient direction (-Tx, -Ty).
 def gradient_descent(plate, start_x, start_y, step_size=0.08, steps=30):
     curr_x, curr_y = start_x, start_y
     path = [(curr_x, curr_y)]
@@ -52,7 +70,10 @@ def gradient_descent(plate, start_x, start_y, step_size=0.08, steps=30):
         path.append((curr_x, curr_y))
     return path, plate.get_temp(curr_x, curr_y)
 
-# Grid search for maximum temperature coordinates
+# Searches the plate surface on a regular grid to locate the maximum temperature.
+# Inputs: plate object and number of grid divisions n_grid.
+# Outputs: tuple (best_x, best_y, peak_temperature).
+# Scans coordinates from 0 to L with step dx = L / n_grid to find the peak.
 def find_hottest_point(plate, n_grid=50):
     best_t, best_x, best_y = -1000.0, 0.0, 0.0
     dx = plate.L / n_grid
@@ -64,7 +85,10 @@ def find_hottest_point(plate, n_grid=50):
                 best_t, best_x, best_y = t, x, y
     return best_x, best_y, best_t
 
-# Thermal risk classification based on peak temperature
+# Categorizes operational thermal risk based on peak temperature.
+# Inputs: temperature value temp in degrees C.
+# Output: risk category string ("Low", "Medium", or "High").
+# Thresholds: Low < 70 C, Medium 70 to 90 C, High > 90 C.
 def get_risk_level(temp):
     if temp < 70.0:
         return "Low"
@@ -72,7 +96,10 @@ def get_risk_level(temp):
         return "Medium"
     return "High"
 
-# Cooling suggestions based on peak temperature risk level
+# Generates practical cooling recommendations based on peak temperature risk.
+# Inputs: peak temperature value peak_temp in degrees C.
+# Output: list of short recommendation strings for cooling.
+# Calculates needed drop to reach 69.9 C and suggests T0, T_edge, or fan options.
 def cooling_suggestions(peak_temp):
     risk = get_risk_level(peak_temp)
     tips = []
@@ -87,4 +114,3 @@ def cooling_suggestions(peak_temp):
             tips.append("Add a heat sink or fan to improve heat dissipation.")
             tips.append("Move heat-sensitive parts away from the hotspot using gradient descent.")
     return tips
-

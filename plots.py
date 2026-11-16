@@ -2,7 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Visualizes 2D temperature field with heatmap and contours
+# Draws a 2D color heatmap and contour lines of the temperature distribution.
+# Inputs: plate object, grid resolution n_grid, and boolean flag show.
+# Output: Matplotlib Figure object displaying the heat map.
+# Uses imshow with inferno colormap and overlays white contour lines.
 def plot_heatmap(plate, n_grid=50, show=True):
     xs = np.linspace(0.0, plate.L, n_grid)
     x_grid, y_grid = np.meshgrid(xs, xs)
@@ -18,7 +21,10 @@ def plot_heatmap(plate, n_grid=50, show=True):
         plt.show()
     return fig
 
-# Plots gradient descent cooling path over temperature map
+# Overlays the downhill gradient descent trajectory on the temperature map.
+# Inputs: plate object, path coordinate list, grid resolution n_grid, and show flag.
+# Output: Matplotlib Figure object with the path and start/end markers.
+# Draws the background temperature surface and marks path steps from hot to cool.
 def plot_descent_path(plate, path, n_grid=50, show=True):
     xs = np.linspace(0.0, plate.L, n_grid)
     x_grid, y_grid = np.meshgrid(xs, xs)

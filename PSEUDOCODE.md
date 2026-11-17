@@ -1,114 +1,103 @@
-# CalSymPy Algorithm Pseudocode
+# PSEUDOCODE - CalSymPy (Team 4, Delta-T)
 
-This document outlines the core algorithms and flows in CalSymPy in plain, numbered steps without Python syntax. Each section is limited to a maximum of 12 lines.
+## 1. Temperature, Model A (one hotspot)
+1. Take x, y and the values T_edge, T0, s, cx, cy
+2. Find r2 = (x - cx)^2 + (y - cy)^2
+3. Find the hotspot factor e = exp(-r2 / s)
+4. Temperature = T_edge + T0 * e
+5. Return the temperature
 
----
+## 2. Derivatives, Model A (worked out by hand)
+1. Find e as above
+2. Tx = T0 * e * (-2 * (x - cx) / s)
+3. Ty = T0 * e * (-2 * (y - cy) / s)
+4. Txx = T0 * e * (4 * (x - cx)^2 / s^2 - 2 / s)
+5. Tyy = T0 * e * (4 * (y - cy)^2 / s^2 - 2 / s)
+6. Txy = T0 * e * (4 * (x - cx) * (y - cy) / s^2)
+7. Return Tx, Ty, Txx, Tyy, Txy
 
-## 1. Hand-Derived Derivatives (Model A - Gaussian Hotspot)
-1. Calculate squared distance from hotspot center: r^2 = (x - cx)^2 + (y - cy)^2.
-2. Evaluate exponential decay factor: E = T0 * exp(-r^2 / s).
-3. Compute temperature: T = T_edge + E.
-4. Apply chain rule for x derivative: Tx = E * (-2 * (x - cx) / s).
-5. Apply chain rule for y derivative: Ty = E * (-2 * (y - cy) / s).
-6. Apply product rule for second x derivative: Txx = E * [4 * (x - cx)^2 / s^2 - 2 / s].
-7. Apply product rule for second y derivative: Tyy = E * [4 * (y - cy)^2 / s^2 - 2 / s].
-8. Differentiate Tx with respect to y: Txy = E * [4 * (x - cx) * (y - cy) / s^2].
+## 3. Model B (cold edges)
+1. Find a = pi / L
+2. Temperature = T_edge + T0 * sin(a*x) * sin(a*y)
+3. Tx = T0 * a * cos(a*x) * sin(a*y)
+4. Ty = T0 * a * sin(a*x) * cos(a*y)
+5. Txx = -T0 * a^2 * sin(a*x) * sin(a*y)
+6. Tyy = -T0 * a^2 * sin(a*x) * sin(a*y)
+7. Txy = T0 * a^2 * cos(a*x) * cos(a*y)
 
----
+## 4. Gradient and its size
+1. Get Tx and Ty at the point
+2. Magnitude = square root of (Tx^2 + Ty^2)
+3. Return Tx, Ty and the magnitude
 
-## 2. Hand-Derived Derivatives (Model B - Sine Plate)
-1. Normalize coordinates across plate: u = pi * x / L and v = pi * y / L.
-2. Compute temperature: T = T_edge + T0 * sin(u) * sin(v).
-3. Differentiate with respect to x: Tx = T0 * (pi / L) * cos(u) * sin(v).
-4. Differentiate with respect to y: Ty = T0 * (pi / L) * sin(u) * cos(v).
-5. Differentiate Tx with respect to x: Txx = -T0 * (pi / L)^2 * sin(u) * sin(v).
-6. Differentiate Ty with respect to y: Tyy = -T0 * (pi / L)^2 * sin(u) * sin(v).
-7. Differentiate Tx with respect to y: Txy = T0 * (pi / L)^2 * cos(u) * cos(v).
+## 5. Second derivative test
+1. Get Txx, Tyy and Txy at the point
+2. D = Txx * Tyy - Txy^2
+3. If D is clearly above 0 and Txx is below 0, answer "Local Maximum"
+4. Else if D is above 0 and Txx is above 0, answer "Local Minimum"
+5. Else if D is below 0, answer "Saddle Point"
+6. Else (D is about 0), answer "Inconclusive"
+7. Return Txx, Tyy, Txy, D and the answer
 
----
+## 6. Hottest point (grid search)
+1. Set best_temp to a very low number
+2. Make n_grid equally spaced values from 0 to L
+3. For each x value
+4.    For each y value
+5.       Find the temperature at (x, y)
+6.       If it is higher than best_temp, save it and save x, y
+7. Return best x, best y and best_temp
 
-## 3. Gradient and D-Test (Second Derivative Test)
-1. Calculate first partial derivatives Tx and Ty at coordinates (x, y).
-2. Construct gradient vector [Tx, Ty] indicating the direction of steepest increase.
-3. Compute gradient magnitude as square root of (Tx^2 + Ty^2).
-4. Calculate second partial derivatives Txx, Tyy, and mixed partial Txy.
-5. Compute Hessian discriminant D = Txx * Tyy - (Txy)^2.
-6. If D is positive and Txx is negative, classify as Local Maximum.
-7. If D is positive and Txx is positive, classify as Local Minimum.
-8. If D is negative, classify as Saddle Point.
-9. If D is zero, classify test as Inconclusive.
+## 7. Average temperature (midpoint Riemann sum)
+1. Split the plate into n by n small squares
+2. Set dx = L / n and dy = L / n, and total = 0
+3. For each column i and each row j
+4.    Take the middle of the square: x = (i + 0.5) * dx, y = (j + 0.5) * dy
+5.    Add temperature(x, y) * dx * dy to total
+6. Average = total / (L * L)
+7. Return the average
 
----
+## 8. Tangent plane and Taylor polynomial at (a, b)
+1. Find dx = x - a and dy = y - b
+2. Get T, Tx, Ty, Txx, Tyy, Txy at (a, b)
+3. Tangent plane = T + Tx * dx + Ty * dy
+4. Taylor degree 2 = tangent plane + 0.5 * (Txx*dx^2 + 2*Txy*dx*dy + Tyy*dy^2)
+5. Return the value
 
-## 4. Hottest-Point Grid Search
-1. Initialize highest recorded temperature to a large negative number.
-2. Divide plate length L into N equal intervals with spacing dx = L / N.
-3. Outer loop: step coordinate x across grid from 0 to L by dx.
-4. Inner loop: step coordinate y across grid from 0 to L by dx.
-5. Calculate temperature T at each grid intersection (x, y).
-6. If current T is greater than highest recorded temperature:
-7. Update highest recorded temperature to T.
-8. Record current (x, y) coordinates as the hottest location.
-9. Output peak temperature and hottest coordinates after full scan completes.
+## 9. Gradient descent (moving the chip to a cooler place)
+1. Start at (x, y) and save the start in a path list
+2. Repeat for the chosen number of steps
+3.    Get Tx and Ty at (x, y)
+4.    Move downhill: x = x - step_size * Tx, y = y - step_size * Ty
+      (The code uses the raw gradient components Tx and Ty scaled by step_size)
+5.    Keep x and y between 0.2 and L - 0.2 (clamp)
+6.    Add the new point to the path
+7. Return the path and the temperature at the last point
 
----
+## 10. Risk level
+1. If temperature is below 70, answer "Low"
+2. Else if temperature is 90 or below, answer "Medium"
+3. Else answer "High"
+(The limits 70 and 90 are our own choice)
 
-## 5. Midpoint Riemann Sum Average (Double Integral)
-1. Choose number of grid intervals N along each axis of the square plate.
-2. Calculate interval width dx = L / N and dy = L / N.
-3. Calculate area of each small rectangular cell: dA = dx * dy.
-4. Initialize accumulated temperature sum to zero.
-5. Outer loop: for index i from 0 to N - 1, find midpoint x = (i + 0.5) * dx.
-6. Inner loop: for index j from 0 to N - 1, find midpoint y = (j + 0.5) * dy.
-7. Evaluate temperature T at midpoint (x, y) and add T * dA to accumulated sum.
-8. Compute total plate area as L * L.
-9. Divide accumulated sum by total area to get the average plate temperature.
+## 11. Cooling suggestions
+1. Find the risk level of the peak temperature
+2. If Low, add "no action needed" to the list
+3. Else find drop = peak - 69.9, rounded to 1 decimal
+4. Add: peak must fall by at least drop degrees to reach Low
+5. Add option 1: reduce the chip heating T0 by drop
+6. Add option 2: cool the plate edges and surroundings (T_edge) by drop
+7. If High, also add: use a heat sink or fan, and move heat-sensitive parts away
+8. Return the list
 
----
-
-## 6. Tangent Plane and Degree-2 Taylor Polynomial
-1. Choose expansion base point (a, b) and evaluation point (x, y).
-2. Compute displacements from base point: dx = x - a and dy = y - b.
-3. Evaluate base temperature T(a, b) and gradient components Tx, Ty at (a, b).
-4. Linear tangent plane: compute L(x, y) = T(a, b) + Tx * dx + Ty * dy.
-5. Evaluate second partial derivatives Txx, Tyy, and Txy at (a, b).
-6. Quadratic curvature term: 0.5 * Txx * dx^2 + Txy * dx * dy + 0.5 * Tyy * dy^2.
-7. Degree-2 Taylor polynomial: sum linear tangent plane and quadratic curvature term.
-
----
-
-## 7. Gradient Descent (Cooling Chip Relocation)
-1. Set starting chip location (x, y), learning rate step size, and step limit.
-2. Record initial chip location in the trajectory path list.
-3. Loop from 1 to step limit:
-4. Calculate temperature gradient components Tx and Ty at current position.
-5. Update position downhill along negative gradient: x = x - step_size * Tx.
-6. Update position downhill along negative gradient: y = y - step_size * Ty.
-7. Clamp x and y to remain within safe plate margins between 0.2 and L - 0.2.
-8. Append new position (x, y) to trajectory path list.
-9. Evaluate final temperature at stopping position and output total cooling achieved.
-
----
-
-## 8. Risk Level Classification
-1. Receive peak plate temperature T in degrees Celsius.
-2. If temperature T is strictly less than 70 degrees Celsius:
-3. Assign risk classification "Low" (safe operating temperature).
-4. If temperature T is between 70 and 90 degrees Celsius inclusive:
-5. Assign risk classification "Medium" (elevated thermal stress).
-6. If temperature T is strictly greater than 90 degrees Celsius:
-7. Assign risk classification "High" (exceeds thermal limit, cooling required).
-8. Return assigned risk level.
-
----
-
-## 9. Cooling Suggestions
-1. Receive peak temperature and determine risk classification (Low, Medium, High).
-2. If risk is Low: return single message that temperature is safe and no action is needed.
-3. If risk is Medium or High: compute required drop = round(peak temperature - 69.9, 1).
-4. Add message stating peak must fall by drop amount to reach Low risk.
-5. Suggest Option 1: reduce chip heating power T0 by drop amount.
-6. Suggest Option 2: cool plate boundaries and surroundings T_edge by drop amount.
-7. If risk is High: additionally suggest adding a heat sink or fan to improve heat dissipation.
-8. If risk is High: recommend moving heat-sensitive parts away using gradient descent.
-9. Return list of cooling recommendation sentences.
+## 12. Console program
+1. Create a plate with Model A
+2. Repeat until the user chooses 0
+3.    Show the menu and read the choice
+4.    Choice 1: change model or parameters (reject values that are not numbers or not above 0 for s and L)
+5.    Choice 2: draw the heat map
+6.    Choice 3: ask for x, y, check they are inside the plate, print T, gradient and the D test
+7.    Choice 4: hottest point, risk level and suggestions
+8.    Choice 5: average temperature
+9.    Choice 6: gradient descent and optional plot
+10.   Choice 7: save the report to csv or txt

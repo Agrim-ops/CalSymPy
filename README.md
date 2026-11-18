@@ -25,20 +25,24 @@ The plate has side length L = 4 cm. Both models are fixed formulas that we chose
 
 Model A (single hotspot): one chip at (cx, cy) heats the area around it.
 
-    T(x, y) = T_edge + T0 * exp(-((x - cx)^2 + (y - cy)^2) / s)
+```text
+T(x, y) = T_edge + T0 * exp(-((x - cx)^2 + (y - cy)^2) / s)
+```
 
 Default values: T_edge = 25, T0 = 60, s = 2, cx = cy = 2. The peak is 85 degrees C at (2, 2).
 
 Model B (cold edges): the edges are kept at T_edge and the plate is hottest in the middle.
 
-    T(x, y) = T_edge + T0 * sin(pi*x/L) * sin(pi*y/L)
+```text
+T(x, y) = T_edge + T0 * sin(pi*x/L) * sin(pi*y/L)
+```
 
 Default values: T_edge = 20, T0 = 50. The peak is 70 degrees C at (2, 2).
 
 ## Calculus used
 
 - Partial derivatives Tx and Ty, and the gradient vector with its magnitude. The gradient points in the direction where temperature rises fastest.
-- Second partial derivatives Txx, Tyy and Txy, and the second derivative test D = Txx * Tyy - Txy^2. D > 0 with Txx < 0 is a maximum, D > 0 with Txx > 0 is a minimum, D < 0 is a saddle point, and D = 0 is inconclusive.
+- Second partial derivatives Txx, Tyy and Txy, and the second derivative test `D = Txx * Tyy - Txy^2`. D > 0 with Txx < 0 is a maximum, D > 0 with Txx > 0 is a minimum, D < 0 is a saddle point, and D = 0 is inconclusive.
 - Double integral for the average temperature, calculated with a midpoint Riemann sum.
 - Tangent plane (linear approximation) and a degree 2 Taylor polynomial around a point.
 - Gradient descent: a chip is moved step by step in the direction of -gradient so it ends up in a cooler place.

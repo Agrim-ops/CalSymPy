@@ -9,8 +9,10 @@ st.title("CalSymPy - Plate Heat Map")
 st.write("Check temperatures, slopes, and cooling paths on a square plate.")
 
 with st.expander("About the models"):
-    st.write("Model A (Gaussian Hotspot): T = T_edge + T0 * exp(-((x-cx)^2 + (y-cy)^2)/s) models a circular hotspot centered at (cx, cy).")
-    st.write("Model B (Sine Plate): T = T_edge + T0 * sin(pi*x/L) * sin(pi*y/L) models a standing wave pinned to T_edge at edges.")
+    st.write("Model A (Gaussian Hotspot) models a circular hotspot centered at (cx, cy):")
+    st.latex(r"T(x,y) = T_{edge} + T_0 \, e^{-\frac{(x-c_x)^2 + (y-c_y)^2}{s}}")
+    st.write("Model B (Sine Plate) models a standing wave pinned to cold edges:")
+    st.latex(r"T(x,y) = T_{edge} + T_0 \sin\left(\frac{\pi x}{L}\right)\sin\left(\frac{\pi y}{L}\right)")
     st.write("These formulas are idealised shapes we chose, not derived from the heat equation.")
 
 # Sidebar model and parameter controls

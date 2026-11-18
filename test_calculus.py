@@ -16,6 +16,8 @@ assert abs(plate_a.get_temp(3.0, 2.0) - 61.39) < 0.01
 # 2. Model B tests
 plate_b = models.Plate("B")
 assert abs(plate_b.get_temp(2.0, 2.0) - 70.0) < 1e-4, "Model B T(2,2) should be 70"
+_, _, _, d_b11, res_b11 = calculus.second_derivative_test(plate_b, 1.0, 1.0)
+assert res_b11 == "Inconclusive", "Model B at (1,1) should be Inconclusive"
 
 # 3. Double integral average temperature
 avg_t = calculus.average_temperature(plate_a, n_steps=60)

@@ -70,7 +70,11 @@ def option_lookup(plate):
     print("Temperature: " + str(round(t, 2)) + " deg C")
     print("Gradient: Tx = " + str(round(tx, 3)) + ", Ty = " + str(round(ty, 3)) + " (mag = " + str(round(mag, 3)) + " deg C/cm)")
     print("Second partials: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
-    print("Discriminant D: " + str(round(d, 2)) + " (" + result + ")")
+    if mag > 0.01:
+        print("Discriminant D: " + str(round(d, 2)))
+        print("Not a critical point (the gradient is not zero), so the second derivative test does not apply here.")
+    else:
+        print("Discriminant D: " + str(round(d, 2)) + " (" + result + ")")
 
 # Handles menu option 4 to find the peak temperature and cooling suggestions.
 # Inputs: active plate object.

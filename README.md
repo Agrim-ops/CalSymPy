@@ -42,7 +42,7 @@ Default values: T_edge = 20, T0 = 50. The peak is 70 degrees C at (2, 2).
 ## Calculus used
 
 - Partial derivatives Tx and Ty, and the gradient vector with its magnitude. The gradient points in the direction where temperature rises fastest.
-- Second partial derivatives Txx, Tyy and Txy, and the second derivative test `D = Txx * Tyy - Txy^2`. D > 0 with Txx < 0 is a maximum, D > 0 with Txx > 0 is a minimum, D < 0 is a saddle point, and D = 0 is inconclusive.
+- Second partial derivatives Txx, Tyy and Txy, and the second derivative test `D = Txx * Tyy - Txy^2`. The test applies at critical points where the gradient is zero: D > 0 with Txx < 0 is a maximum, D > 0 with Txx > 0 is a minimum, D < 0 is a saddle point, and D = 0 is inconclusive.
 - Double integral for the average temperature, calculated with a midpoint Riemann sum.
 - Tangent plane (linear approximation) and a degree 2 Taylor polynomial around a point.
 - Gradient descent: a chip is moved step by step in the direction of -gradient so it ends up in a cooler place.
@@ -108,7 +108,8 @@ NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used 
 | Letters or empty input | Program crashes with `ValueError` when converting strings to `float` | `ask_param()` catches `ValueError` and falls back to default; empty inputs keep current value; coordinates check catches invalid strings | Fixed |
 | Point outside the plate | Point lookup computes out-of-bounds temperatures beyond the physical plate boundary $[0, L] \times [0, L]$ | `option_lookup()` checks `0 <= x, y <= L` and prints warning; `app.py` displays warning banner | Fixed |
 | Read-only report file | Saving report raises `PermissionError` (subclass of `OSError`) if destination file is locked or read-only | `option_save_report()` wraps file writes in `try ... except (IOError, OSError)` and displays friendly error message | Fixed |
-| D = 0 | Second derivative test cannot determine if critical point is extremum or saddle point | `second_derivative_test()` explicitly falls back to returning `"Inconclusive"` | Fixed |
+| D = 0 | Second derivative test cannot determine if a critical point is an extremum or saddle point; floating-point roundoff can yield tiny negative values (e.g. $D \approx -1.1 \times 10^{-13}$ on Model B at $(1, 1)$) falsely reporting "Saddle Point" | `second_derivative_test()` checks `abs(d) < 1e-6` first and returns `"Inconclusive"` | Fixed |
+| D-test at non-critical point | Second derivative test only applies at critical points where the gradient is zero; at non-critical points (e.g. Model A at $(3, 2.5)$ where $|\nabla T| \approx 35.91\text{ C/cm}$), evaluating $D$ gives a mathematically invalid classification (such as "Saddle Point") | `main.py` and `app.py` check if gradient magnitude $> 0.01$; if non-zero, they display $D$ but state the second derivative test does not apply here | Fixed |
 | Chip starting at the peak | Chip is already at local maximum where gradient $\nabla T = \langle 0, 0 \rangle$, so magnitude is 0 and descent cannot find a downhill direction | In `gradient_descent()` the magnitude check `if mag > 0.0:` keeps the chip stationary; default start is set away from center $(1.5, 1.5)$ | Not fixed (limitation) |
 | Large gradient descent step | A huge step size could overshoot or throw coordinates far off the plate | Each step moves along the unit downhill vector and coordinates are clamped to safe plate margins $[0.2, L - 0.2]$ on every step | Fixed |
 | Few Riemann sum steps | Small `n_steps` (e.g. 2 or 5) produces coarse Riemann sum discretization error | Default `n_steps` is set to 80 ($80 \times 80 = 6,400$ midpoints), converging within $< 0.01^\circ\text{C}$ of continuous integral | Not fixed (limitation) |

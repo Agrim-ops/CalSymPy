@@ -16,13 +16,13 @@ def gradient(plate, x, y):
 def second_derivative_test(plate, x, y):
     txx, tyy, txy = plate.get_hessian(x, y)
     d = txx * tyy - (txy ** 2)
+    if abs(d) < 1e-6:
+        return txx, tyy, txy, d, "Inconclusive"
     if d > 0 and txx < 0:
         return txx, tyy, txy, d, "Local Maximum"
     if d > 0 and txx > 0:
         return txx, tyy, txy, d, "Local Minimum"
-    if d < 0:
-        return txx, tyy, txy, d, "Saddle Point"
-    return txx, tyy, txy, d, "Inconclusive"
+    return txx, tyy, txy, d, "Saddle Point"
 
 # Calculates the average plate temperature using a double integral.
 # Inputs: plate object and number of subdivision steps along each axis.

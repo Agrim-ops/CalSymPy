@@ -33,11 +33,12 @@
 ## 5. Second derivative test
 1. Get Txx, Tyy and Txy at the point
 2. D = Txx * Tyy - Txy^2
-3. If D is clearly above 0 and Txx is below 0, answer "Local Maximum"
-4. Else if D is above 0 and Txx is above 0, answer "Local Minimum"
-5. Else if D is below 0, answer "Saddle Point"
-6. Else (D is about 0), answer "Inconclusive"
+3. If absolute value of D < 1e-6, answer "Inconclusive" (numerical tolerance for zero)
+4. Else if D > 0 and Txx < 0, answer "Local Maximum"
+5. Else if D > 0 and Txx > 0, answer "Local Minimum"
+6. Else if D < 0, answer "Saddle Point"
 7. Return Txx, Tyy, Txy, D and the answer
+Note: The test only classifies critical points where the gradient is zero (magnitude <= 0.01). At non-critical points, the test does not apply.
 
 ## 6. Hottest point (grid search)
 1. Set best_temp to a very low number

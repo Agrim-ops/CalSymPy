@@ -15,12 +15,12 @@ This test report documents the test runs, real failure logs, fixes applied, desi
   - Clean virtual environment verified from `requirements.txt`.
 - **Thermal Limits**:
   - Intel says the maximum junction temperature usually lies between about 100 and 110 degrees C, depending on the product. Our 70 and 90 degree limits are our own rule of thumb with a safety margin.
-- **Total Test Cases Executed**: 30 tests across console, numerical integration, boundary conditions, notebook execution, and Streamlit web application.
+- **Total Test Cases Executed**: 38 tests across console, numerical integration, boundary conditions, notebook execution, and Streamlit web application.
 - **Initial Test Results**:
   - Passed: 28
-  - Failed (Real Bugs): 2
-- **Bugs & Weaknesses Fixed**: 2 bugs + 1 gradient descent design weakness (all verified with automated re-tests).
-- **Post-Fix Test Results**: 30 Passed, 0 Failed.
+  - Failed (Real Bugs & Issues): 2 bugs + 1 gradient descent weakness + 4 numerical and application issues (floating-point Hessian tolerance, non-critical D-test, app slider defaults, open Matplotlib figures).
+- **Bugs & Weaknesses Fixed**: 2 bugs + 1 gradient descent weakness + 4 numerical and application issues (all verified with automated re-tests).
+- **Post-Fix Test Results**: 38 Passed, 0 Failed.
 - **Scope**: Covers the two analytical temperature models (Model A: Gaussian hotspot, Model B: Sine plate), the 8 core multivariable calculus tools, the interactive console interface, and the Streamlit web application.
 
 ---
@@ -48,7 +48,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 | **TC-17** | `main.py` Option 6 | Descent with huge step size ($1000.0$) | No step escapes the plate boundary | All steps clamped strictly within $[0.2, 3.8]$ | **PASS** |
 | **TC-18** | `main.py` Option 7 | Save report twice (CSV then TXT) | Overwrites / creates files cleanly | Created `report_A.csv` and `report_A.txt` | **PASS** |
 | **TC-19** | `main.py` | Save report when destination is read-only | Catch permission error without crashing | Initially crashed with `PermissionError` (see Bug 2); fixed with `try...except (IOError, OSError)` | **PASS (Fixed)** |
-| **TC-20** | `calculus.py` | Model B D-test where $D=0$ at $(1.0, 1.0)$ | Hessian determinant evaluates near 0 | $D = 0.00000000$, classified as `Inconclusive` | **PASS** |
+| **TC-20** | `calculus.py` | Model B D-test where $D \approx 0$ at $(1.0, 1.0)$ | Determinant checked with $|D| < 10^{-6}$ tolerance | $D = -1.14 \times 10^{-13}$, classified as `Inconclusive` | **PASS (Fixed)** |
 | **TC-21** | `calculus.py` | `average_temperature` vs SymPy exact ($n=10$) | Monotonic convergence toward exact integral | Value: $40.431729^\circ\text{C}$, Error: $0.167492^\circ\text{C}$ ($0.42\%$) | **PASS** |
 | **TC-22** | `calculus.py` | `average_temperature` vs SymPy exact ($n=80$) | Higher accuracy midpoint Riemann sum | Value: $40.266841^\circ\text{C}$, Error: $0.002604^\circ\text{C}$ ($0.0065\%$) | **PASS** |
 | **TC-23** | `calculus.py` | `average_temperature` vs SymPy exact ($n=400$) | Asymptotic double integral precision | Value: $40.264341^\circ\text{C}$, Error: $0.000104^\circ\text{C}$ ($0.0003\%$) | **PASS** |
@@ -63,6 +63,10 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 | **TC-32** | `calculus.py` | Best placement when start already safe $(0.3, 0.3)$ | Returns initial position with distance $0.0$ | Returned $(0.30, 0.30)$ at $28.33^\circ\text{C}$, distance $0.00\text{ cm}$ | **PASS** |
 | **TC-33** | `calculus.py` | Best placement with unreachable `limit=10.0` | Returns `None` without exception | Returned `None` | **PASS** |
 | **TC-34** | `app.py` | Model formulas in expander | Render formulas using `st.latex()` | Clean KaTeX display with zero Markdown italics corruption | **PASS** |
+| **TC-35** | `main.py` / `app.py` | Point lookup at non-critical point (Model A at $(3.0, 2.5)$) | $|\nabla T| = 35.91 > 0.01$; suppresses classification and states test does not apply | Displays $D = -257.85$ and note that test does not apply | **PASS (Fixed)** |
+| **TC-36** | `test_calculus.py` | Model B at $(1.0, 1.0)$ assertion | Returns `Inconclusive` | Assertion passes | **PASS** |
+| **TC-37** | `app.py` | Default peak temperatures in sidebar | Model A default $T_{\text{edge}}=25.0$ (peak $85.0^\circ\text{C}$), Model B default $T_{\text{edge}}=20.0$ (peak $70.0^\circ\text{C}$) | Web app defaults match `main.py` and README | **PASS (Fixed)** |
+| **TC-38** | `app.py` | Matplotlib figure cleanup after `st.pyplot` | `plt.close()` called on each figure to prevent memory leak | Zero memory warnings across multiple AppTest runs | **PASS (Fixed)** |
 
 ---
 
@@ -201,6 +205,63 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 ---
 
+### Issue 5: Floating-Point Roundoff at Model B $(1, 1)$ Causing Erroneous Saddle Point Classification
+- **Issue ID**: ISS-03 (Found by Numerical Evaluation & Fixed)
+- **Location**: `calculus.py`, `second_derivative_test()`
+- **Description**: At $(1.0, 1.0)$ on Model B, analytical differentiation gives:
+  $$T_{xx} = T_{yy} = -50\left(\frac{\pi}{4}\right)^2 \sin\left(\frac{\pi}{4}\right)\sin\left(\frac{\pi}{4}\right) \approx -15.421257$$
+  $$T_{xy} = 50\left(\frac{\pi}{4}\right)^2 \cos\left(\frac{\pi}{4}\right)\cos\left(\frac{\pi}{4}\right) \approx 15.421257$$
+  Analytically, $D = T_{xx} T_{yy} - T_{xy}^2 = 0.0$. However, in IEEE 754 floating-point arithmetic, evaluating $T_{xx} T_{yy} - T_{xy}^2$ without tolerance yields:
+  $$D = -1.1368683772161603 \times 10^{-13} \approx -1.1 \times 10^{-13}$$
+  Because $D < 0$, the conditional branch `if d < 0:` executed and incorrectly returned `"Saddle Point"` instead of `"Inconclusive"`.
+- **Cause**: Lack of a small numerical tolerance threshold around zero for floating-point determinant evaluation.
+- **Fix**: Added `if abs(d) < 1e-6: return txx, tyy, txy, d, "Inconclusive"` as the first check in `second_derivative_test()`. Added an assertion in `test_calculus.py` to ensure Model B at $(1.0, 1.0)$ returns `"Inconclusive"`.
+- **Re-test Result**: Verified with `python test_calculus.py`; Model B at $(1.0, 1.0)$ reliably returns `"Inconclusive"`.
+- **Status**: Fixed in local commit.
+
+---
+
+### Issue 6: Misleading Second Derivative Test Classification at Non-Critical Point (Model A at $(3.0, 2.5)$)
+- **Issue ID**: ISS-04 (Found by Numerical Audit & Fixed)
+- **Location**: `main.py` (`option_lookup`), `app.py` ("Check a Point")
+- **Description**: Evaluating Model A at $(3.0, 2.5)$ yields:
+  $$T(3.0, 2.5) \approx 57.12^\circ\text{C}, \quad \nabla T = \langle -32.116, -16.058 \rangle, \quad |\nabla T| \approx 35.906\text{ C/cm}$$
+  Second partial derivatives evaluate to $T_{xx} = 0.000$, $T_{yy} = -24.087$, $T_{xy} = 16.058$, giving:
+  $$D = (0.000)(-24.087) - (16.058)^2 \approx -257.85 < 0$$
+  Previously, both the console menu and web application classified this point as `"Saddle Point"`. This classification was mathematically invalid because the second derivative test applies only at critical points where $\nabla T = \mathbf{0}$.
+- **Cause**: Running the classification check without verifying whether the point is a critical point ($|\nabla T| \le 0.01$).
+- **Fix**: In both `main.py` and `app.py`, checked if gradient magnitude `mag > 0.01`. If non-zero, the program prints $D$ but suppresses the classification, displaying: `"Not a critical point (the gradient is not zero), so the second derivative test does not apply here."`. If `mag <= 0.01`, the classification is printed.
+- **Re-test Result**: Evaluated Model A at $(3.0, 2.5)$ in console and web app; both display $D = -257.85$ and the explanation that the test does not apply. At $(2.0, 2.0)$ ($|\nabla T| = 0.000$), prints $D = 3600.00$ with `"Local Maximum"`.
+- **Status**: Fixed in local commit.
+
+---
+
+### Issue 7: Inconsistent Web App Default Peak Temperatures ($75^\circ\text{C}$ and $65^\circ\text{C}$ vs $85^\circ\text{C}$ and $70^\circ\text{C}$)
+- **Issue ID**: ISS-05 (Found by Parameter Audit & Fixed)
+- **Location**: `app.py`, sidebar slider defaults
+- **Description**: In `app.py`, the `t_edge` slider defaulted to `15.0` regardless of model. This produced default peak temperatures of:
+  - Model A: $15.0 + 60.0 = 75.0^\circ\text{C}$ (Low risk)
+  - Model B: $15.0 + 50.0 = 65.0^\circ\text{C}$ (Low risk)
+  However, `main.py` and `README.md` define standard defaults as $T_{\text{edge}} = 25.0^\circ\text{C}$ for Model A (peak $85.0^\circ\text{C}$, Medium risk) and $T_{\text{edge}} = 20.0^\circ\text{C}$ for Model B (peak $70.0^\circ\text{C}$, Medium risk).
+- **Cause**: Hardcoded `value=15.0` on the `t_edge` sidebar slider.
+- **Fix**: Updated `app.py` slider default to `value=25.0 if model == "A" else 20.0`.
+- **Re-test Result**: Verified in `app.py` via `AppTest`: Model A initial load displays peak $85.0^\circ\text{C}$ (Medium risk), and switching to Model B displays peak $70.0^\circ\text{C}$ (Medium risk), matching `main.py` and README.
+- **Status**: Fixed in local commit.
+
+---
+
+### Issue 8: Memory Warning in Streamlit from Accumulating Matplotlib Figures (25 Open Figures Warning)
+- **Issue ID**: ISS-06 (Found by App Execution & Fixed)
+- **Location**: `app.py`, heat map and trajectory plot rendering
+- **Description**: `plots.plot_heatmap()` and `plots.plot_descent_path()` create Matplotlib figure objects with `plt.figure()`. After `st.pyplot(fig)` rendered each figure, `plt.close(fig)` was not called. During continuous browser interaction or automated test reruns, open figure count exceeded 20 (reaching 25+ open figures), triggering Matplotlib's memory warning:
+  `PyplotGlobalUseWarning: More than 20 figures have been opened. Figures created through the pyplot interface (matplotlib.pyplot.figure) are retained until explicitly closed and may consume too much memory. (To close figures, see plt.close())`
+- **Cause**: Missing `plt.close()` calls after rendering figures in Streamlit.
+- **Fix**: Added `import matplotlib.pyplot as plt` to `app.py` and called `plt.close(fig)` immediately after `st.pyplot(fig)` and `plt.close(fig_d)` after `st.pyplot(fig_d)`.
+- **Re-test Result**: Ran repeated `AppTest` cycles and slider updates; zero figure accumulation warnings.
+- **Status**: Fixed in local commit.
+
+---
+
 ## 4. Limitations Found But Not Fixed (Design Choices)
 
 1. **Initial Point Clamping in Gradient Descent**:
@@ -250,4 +311,17 @@ Execute the following commands from PowerShell inside `E:\Study\Projects\calsymp
 5. **Test Colab Backup Notebook Top-to-Bottom**:
    ```powershell
    python -c "import json, matplotlib; matplotlib.use('Agg'); nb = json.load(open('notebooks/colab_backup.ipynb', encoding='utf-8')); g = {}; [exec(''.join(c['source']), g) for c in nb['cells'] if c['cell_type'] == 'code']; print('Notebook executed top-to-bottom successfully!')"
+   ```
+
+6. **Test Streamlit Web Application (`app.py`) via AppTest**:
+   ```powershell
+   python -c "from streamlit.testing.v1 import AppTest; at = AppTest.from_file('app.py', default_timeout=20).run(); assert not at.exception; print('AppTest passed successfully!')"
+   ```
+
+7. **Test Non-Critical Point and D-Test Tolerance**:
+   ```powershell
+   # Model A at (3.0, 2.5) -> reports test does not apply
+   python -c "import main, io, sys; sys.stdin = io.StringIO('3\n3.0\n2.5\n0\n'); main.main()"
+   # Model B at (1.0, 1.0) -> returns Inconclusive
+   python -c "import models, calculus; p = models.Plate('B'); print(calculus.second_derivative_test(p, 1.0, 1.0))"
    ```

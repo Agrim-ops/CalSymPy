@@ -1,6 +1,7 @@
 # app.py - Streamlit web app for CalSymPy heat distribution
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 import models
 import calculus
 import plots
@@ -21,7 +22,7 @@ model = st.sidebar.selectbox("Choose Model", ["A", "B"])
 plate = models.Plate(model)
 
 plate.L = st.sidebar.slider("Plate size L", min_value=1.0, max_value=10.0, value=4.0, step=0.5)
-plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=15.0, step=1.0)
+plate.t_edge = st.sidebar.slider("Edge temp T_edge", min_value=0.0, max_value=50.0, value=25.0 if model == "A" else 20.0, step=1.0)
 plate.t0 = st.sidebar.slider("Hotspot heat T0", min_value=0.0, max_value=150.0, value=60.0 if model == "A" else 50.0, step=1.0)
 if model == "A":
     plate.s = st.sidebar.slider("Hotspot width s", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
@@ -32,6 +33,7 @@ if model == "A":
 st.subheader("Plate Heat Map")
 fig = plots.plot_heatmap(plate, show=False)
 st.pyplot(fig)
+plt.close(fig)
 
 # Plate summary metrics and cooling suggestions
 st.subheader("Plate Summary")
@@ -59,7 +61,11 @@ else:
     st.write("Temperature: " + str(round(t, 2)) + " C")
     st.write("Gradient: Tx = " + str(round(tx, 3)) + ", Ty = " + str(round(ty, 3)) + " (slope = " + str(round(mag, 3)) + " C/cm)")
     st.write("Second partials: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
-    st.write("Hessian D = " + str(round(d, 2)) + " (" + res + ")")
+    if mag > 0.01:
+        st.write("Hessian D = " + str(round(d, 2)))
+        st.write("Not a critical point (the gradient is not zero), so the second derivative test does not apply here.")
+    else:
+        st.write("Hessian D = " + str(round(d, 2)) + " (" + res + ")")
 
 # Chip cooling via gradient descent and best placement search
 st.subheader("Cool Down a Chip")
@@ -79,6 +85,7 @@ if st.button("Move chip"):
         b_pt = (best[0], best[1]) if best else None
         fig_d = plots.plot_descent_path(plate, path, show=False, best_point=b_pt)
         st.pyplot(fig_d)
+        plt.close(fig_d)
 
 # Download CSV report
 metrics = ["Model", "Plate Size L", "T_edge", "T0", "Hottest X", "Hottest Y", "Peak Temp", "Risk Level", "Average Temp"]

@@ -31,8 +31,10 @@ tay_val = calculus.taylor_degree_2(plate_a, 2.0, 2.0, 2.1, 2.1)
 assert abs(tay_val - plate_a.get_temp(2.1, 2.1)) < 0.01
 
 # 5. Gradient descent downhill cooling
-path, final_t = calculus.gradient_descent(plate_a, 1.5, 1.5, step_size=0.08, steps=20)
+path, final_t = calculus.gradient_descent(plate_a, 1.5, 1.5)
 assert final_t < plate_a.get_temp(1.5, 1.5)
+step1_dist = ((path[1][0] - path[0][0]) ** 2 + (path[1][1] - path[0][1]) ** 2) ** 0.5
+assert step1_dist < 0.15, "First step should move less than 0.15 cm"
 
 # 6. Grid hottest point and risk level
 hx, hy, ht = calculus.find_hottest_point(plate_a, n_grid=40)

@@ -66,19 +66,20 @@
 
 ## 9. Gradient descent (moving the chip to a cooler place)
 1. Start at (x, y) and save the start in a path list
-2. Repeat for the chosen number of steps
-3.    Get Tx and Ty at (x, y)
-4.    Move downhill: x = x - step_size * Tx, y = y - step_size * Ty
-      (The code uses the raw gradient components Tx and Ty scaled by step_size)
-5.    Keep x and y between 0.2 and L - 0.2 (clamp)
-6.    Add the new point to the path
-7. Return the path and the temperature at the last point
+2. Repeat for the chosen number of steps (default 40):
+   1. Get Tx and Ty at (x, y)
+   2. Find magnitude = sqrt(Tx^2 + Ty^2)
+   3. If magnitude > 0:
+      Move downhill by unit step: x = x - step_size * (Tx / magnitude), y = y - step_size * (Ty / magnitude)
+   4. Keep x and y between 0.2 and L - 0.2 (clamp)
+   5. Add the new point to the path
+3. Return the path and the temperature at the last point
 
 ## 10. Risk level
 1. If temperature is below 70, answer "Low"
 2. Else if temperature is 90 or below, answer "Medium"
 3. Else answer "High"
-(The limits 70 and 90 are our own choice)
+(Intel says the maximum junction temperature usually lies between about 100 and 110 degrees C, depending on the product. Our 70 and 90 degree limits are our own rule of thumb with a safety margin.)
 
 ## 11. Cooling suggestions
 1. Find the risk level of the peak temperature

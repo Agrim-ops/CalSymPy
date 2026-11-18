@@ -98,7 +98,7 @@ def option_average(plate):
 # Handles menu option 6 to simulate downhill chip cooling relocation.
 # Inputs: active plate object.
 # Outputs: none (prints trajectory and optionally plots path).
-# Iteratively steps along the negative gradient vector to cool the chip.
+# Moves along the unit downhill gradient vector step by step to cool the chip.
 def option_descent(plate):
     try:
         val_x = input("Enter initial chip x (default 1.5): ").strip()

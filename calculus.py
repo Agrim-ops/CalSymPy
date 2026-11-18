@@ -56,17 +56,22 @@ def taylor_degree_2(plate, a, b, x, y):
     linear = plate.get_temp(a, b) + tx * dx + ty * dy
     return linear + 0.5 * txx * (dx ** 2) + txy * dx * dy + 0.5 * tyy * (dy ** 2)
 
-# Simulates moving a heat-sensitive chip downhill to a cooler location.
+# Simulates moving a heat-sensitive chip downhill to a cooler spot.
 # Inputs: plate object, starting coordinates, step size, and step count.
 # Outputs: tuple (path list, final temperature).
-# Moves repeatedly along the negative gradient direction (-Tx, -Ty).
-def gradient_descent(plate, start_x, start_y, step_size=0.08, steps=30):
-    curr_x, curr_y = start_x, start_y
+# Moves along the unit downhill direction (-Tx/mag, -Ty/mag) with boundary clamping.
+def gradient_descent(plate, start_x, start_y, step_size=0.1, steps=40):
+    curr_x = start_x
+    curr_y = start_y
     path = [(curr_x, curr_y)]
     for _ in range(steps):
         tx, ty = plate.get_grad(curr_x, curr_y)
-        curr_x = max(0.2, min(plate.L - 0.2, curr_x - step_size * tx))
-        curr_y = max(0.2, min(plate.L - 0.2, curr_y - step_size * ty))
+        mag = np.sqrt(tx ** 2 + ty ** 2)
+        if mag > 0.0:
+            curr_x = curr_x - step_size * (tx / mag)
+            curr_y = curr_y - step_size * (ty / mag)
+        curr_x = max(0.2, min(plate.L - 0.2, curr_x))
+        curr_y = max(0.2, min(plate.L - 0.2, curr_y))
         path.append((curr_x, curr_y))
     return path, plate.get_temp(curr_x, curr_y)
 

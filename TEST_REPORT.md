@@ -1,8 +1,8 @@
 # CalSymPy (MAT 112) Test Report
-**Branch**: `trimmed`  
+**Branch**: `main`  
 **Project**: CalSymPy v2 (Team 4, Delta-T)
 
-This test report documents the test runs, real failure logs, fixes applied, design limitations, and human verification checks for the trimmed `calsympy_v2` project.
+This test report documents the test runs, real failure logs, fixes applied, design limitations, and human verification checks for the `calsympy_v2` project.
 
 ---
 
@@ -11,13 +11,15 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 - **Test Environment**:
   - Operating System: Windows 11 (win32)
   - Python Version: Python 3.12.10
-  - Dependencies: `numpy==2.5.3`, `matplotlib==3.11.2`, `pandas==3.1.0`, `scipy==1.18.1`, `sympy==1.14.0`
+  - Dependencies: `numpy==2.5.3`, `matplotlib==3.11.2`, `pandas==3.1.0`, `sympy==1.14.0`, `streamlit==1.67.0`
   - Clean virtual environment verified from `requirements.txt`.
+- **Thermal Limits**:
+  - Intel says the maximum junction temperature usually lies between about 100 and 110 degrees C, depending on the product. Our 70 and 90 degree limits are our own rule of thumb with a safety margin.
 - **Total Test Cases Executed**: 30 tests across console, numerical integration, boundary conditions, notebook execution, and Streamlit web application.
 - **Initial Test Results**:
   - Passed: 28
   - Failed (Real Bugs): 2
-- **Bugs Fixed**: 2 (both fixed in beginner style and verified with automated re-tests).
+- **Bugs & Weaknesses Fixed**: 2 bugs + 1 gradient descent design weakness (all verified with automated re-tests).
 - **Post-Fix Test Results**: 30 Passed, 0 Failed.
 - **Scope**: Covers the two analytical temperature models (Model A: Gaussian hotspot, Model B: Sine plate), the 8 core multivariable calculus tools, the interactive console interface, and the Streamlit web application.
 
@@ -27,7 +29,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 | Test ID | Area | Input / Condition | Expected Behavior | Actual Behavior | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **TC-01** | Environment | Fresh venv from `requirements.txt` | Clean pip install of all 5 libraries | Installed numpy, matplotlib, pandas, scipy, sympy cleanly | **PASS** |
+| **TC-01** | Environment | Fresh venv from `requirements.txt` | Clean pip install of all 5 libraries | Installed numpy, matplotlib, pandas, sympy, streamlit cleanly | **PASS** |
 | **TC-02** | SymPy Checks | `python check_with_sympy.py` | Off-axis checks match SymPy exact partials | Model A and Model B printed `MATCH` | **PASS** |
 | **TC-03** | Calculus Asserts | `python test_calculus.py` | All asserts pass (gradient, D-test, tangent plane, Taylor, descent) | `All calculus tests passed successfully!` | **PASS** |
 | **TC-04** | `main.py` Option 1 | Model switching: A -> B -> A | Active model and defaults reset properly | Parameters and defaults reset cleanly on switch | **PASS** |
@@ -142,6 +144,32 @@ This test report documents the test runs, real failure logs, fixes applied, desi
   ```
 - **Re-test Result**: With `report_A.csv` marked read-only, `main.py` prints `Error: Could not save report to report_A.csv` and returns to menu. Zero unhandled exceptions.
 - **Status**: Fixed in local commit `d496c6f`.
+
+---
+
+### Design Weakness: Raw Gradient Step Jumping Directly to Boundary Margins
+- **Weakness ID**: DES-01 (Found by Hand Calculation & Fixed)
+- **Location**: `calculus.py`, `gradient_descent()`
+- **Issue Description**: The original implementation stepped proportionally to the raw gradient: `x = x - step_size * Tx`. At the default start $(1.5, 1.5)$ on Model A, the gradient was large ($\nabla T = \langle 22.99, 22.99 \rangle$), causing the first step ($0.08 \times 22.99 \approx 1.84$) to jump past the safe margin directly to $(0.2, 0.2)$ in one single step ($44.38^\circ\text{C}$ drop). Subsequent steps remained pinned to $(0.2, 0.2)$.
+- **Real Trace (Before Fix)**:
+  - Step 0: $(1.5000, 1.5000) \to 71.7280^\circ\text{C}$
+  - Step 1: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+  - Step 2: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+  - Step 3: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+  - Step 4: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+- **Fix**: Changed `gradient_descent()` so each step moves a fixed distance along the unit downhill direction by dividing $T_x$ and $T_y$ by the gradient magnitude $\sqrt{T_x^2 + T_y^2}$. Defaults updated to `step_size=0.1, steps=40`. If magnitude is 0 (at the peak), the chip does not move. Clamping to $[0.2, L - 0.2]$ is maintained.
+- **Real Trace (After Fix)**:
+  - Step 0: $(1.5000, 1.5000) \to 71.7280^\circ\text{C}$
+  - Step 1: $(1.4293, 1.4293) \to 68.3208^\circ\text{C}$
+  - Step 2: $(1.3586, 1.3586) \to 64.7625^\circ\text{C}$
+  - Step 3: $(1.2879, 1.2879) \to 61.1332^\circ\text{C}$
+  - Step 4: $(1.2172, 1.2172) \to 57.5085^\circ\text{C}$
+  ...
+  - Step 38: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+  - Step 39: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+  - Step 40: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
+  The first step distance is now $0.1000\text{ cm} < 0.15\text{ cm}$, producing a gradual, physical downhill path.
+- **Status**: Fixed in local commit.
 
 ---
 

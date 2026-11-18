@@ -25,7 +25,7 @@ def plot_heatmap(plate, n_grid=50, show=True):
 # Inputs: plate object, path coordinate list, grid resolution n_grid, and show flag.
 # Output: Matplotlib Figure object with the path and start/end markers.
 # Draws the background temperature surface and marks path steps from hot to cool.
-def plot_descent_path(plate, path, n_grid=50, show=True):
+def plot_descent_path(plate, path, n_grid=50, show=True, best_point=None):
     xs = np.linspace(0.0, plate.L, n_grid)
     x_grid, y_grid = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
@@ -37,6 +37,8 @@ def plot_descent_path(plate, path, n_grid=50, show=True):
     plt.plot(px, py, "w--", linewidth=2, label="Descent Path")
     plt.plot(px[0], py[0], "go", markersize=8, label="Start")
     plt.plot(px[-1], py[-1], "co", markersize=8, label="End (Cooler)")
+    if best_point is not None:
+        plt.plot(best_point[0], best_point[1], "y*", markersize=12, label="Best Placement")
     plt.title("Gradient Descent: Chip Relocation")
     plt.legend()
     plt.tight_layout()

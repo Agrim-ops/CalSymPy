@@ -49,4 +49,11 @@ assert "15.1" in tips_med
 tips_high = " ".join(calculus.cooling_suggestions(100.0)).lower()
 assert "heat sink or fan" in tips_high
 
+# 8. Best placement search
+best_15 = calculus.find_best_placement(plate_a, 1.5, 1.5)
+assert best_15 is not None and best_15[2] < 70.0 and best_15[3] > 0.0
+best_03 = calculus.find_best_placement(plate_a, 0.3, 0.3)
+assert best_03 is not None and abs(best_03[3]) < 1e-5
+assert calculus.find_best_placement(plate_a, 1.5, 1.5, limit=10.0) is None
+
 print("All calculus tests passed successfully!")

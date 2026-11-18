@@ -119,3 +119,26 @@ def cooling_suggestions(peak_temp):
             tips.append("Add a heat sink or fan to improve heat dissipation.")
             tips.append("Move heat-sensitive parts away from the hotspot using gradient descent.")
     return tips
+
+# Finds the closest position to the start where temperature is below a limit.
+# Inputs: plate object, start coordinates (start_x, start_y), limit, grid count.
+# Outputs: tuple (x, y, temp, dist) or None if no safe spot exists.
+# Scans inside margins [0.2, L - 0.2] for the nearest point below the threshold.
+def find_best_placement(plate, start_x, start_y, limit=70.0, n_grid=60):
+    start_t = plate.get_temp(start_x, start_y)
+    if start_t < limit:
+        return start_x, start_y, start_t, 0.0
+    best_res = None
+    best_dist = 1e9
+    step = (plate.L - 0.4) / n_grid
+    for i in range(n_grid + 1):
+        x = 0.2 + i * step
+        for j in range(n_grid + 1):
+            y = 0.2 + j * step
+            t = plate.get_temp(x, y)
+            if t < limit:
+                dist = np.sqrt((x - start_x) ** 2 + (y - start_y) ** 2)
+                if dist < best_dist:
+                    best_dist = dist
+                    best_res = (x, y, t, dist)
+    return best_res

@@ -61,7 +61,7 @@ else:
     st.write("Second partials: Txx = " + str(round(txx, 3)) + ", Tyy = " + str(round(tyy, 3)) + ", Txy = " + str(round(txy, 3)))
     st.write("Hessian D = " + str(round(d, 2)) + " (" + res + ")")
 
-# Chip cooling via gradient descent
+# Chip cooling via gradient descent and best placement search
 st.subheader("Cool Down a Chip")
 cx0 = st.number_input("Start chip x (cm)", value=1.5)
 cy0 = st.number_input("Start chip y (cm)", value=1.5)
@@ -70,9 +70,14 @@ if st.button("Move chip"):
         st.warning("Chip start position is outside the plate (0 to " + str(plate.L) + ")!")
     else:
         path, final_t = calculus.gradient_descent(plate, cx0, cy0)
-        st.write("New position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
-        st.write("New temperature: " + str(round(final_t, 2)) + " C")
-        fig_d = plots.plot_descent_path(plate, path, show=False)
+        best = calculus.find_best_placement(plate, cx0, cy0)
+        st.write("Gradient descent end: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ") at " + str(round(final_t, 2)) + " C")
+        if best is not None:
+            st.write("Best placement (< 70 C): (" + str(round(best[0], 2)) + ", " + str(round(best[1], 2)) + ") at " + str(round(best[2], 2)) + " C (moved " + str(round(best[3], 2)) + " cm)")
+        else:
+            st.write("Best placement (< 70 C): No safe position found on the plate.")
+        b_pt = (best[0], best[1]) if best else None
+        fig_d = plots.plot_descent_path(plate, path, show=False, best_point=b_pt)
         st.pyplot(fig_d)
 
 # Download CSV report

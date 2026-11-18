@@ -98,7 +98,7 @@ def option_average(plate):
 # Handles menu option 6 to simulate downhill chip cooling relocation.
 # Inputs: active plate object.
 # Outputs: none (prints trajectory and optionally plots path).
-# Moves along the unit downhill gradient vector step by step to cool the chip.
+# Compares unit-step gradient descent against the closest safe placement.
 def option_descent(plate):
     try:
         val_x = input("Enter initial chip x (default 1.5): ").strip()
@@ -113,11 +113,16 @@ def option_descent(plate):
         return
     start_t = plate.get_temp(sx, sy)
     path, final_t = calculus.gradient_descent(plate, sx, sy)
-    print("\nInitial temperature at (" + str(sx) + ", " + str(sy) + "): " + str(round(start_t, 2)) + " deg C")
-    print("Final position: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ")")
-    print("Final temperature: " + str(round(final_t, 2)) + " deg C (cooling: " + str(round(start_t - final_t, 2)) + " deg C)")
+    best = calculus.find_best_placement(plate, sx, sy)
+    print("\nInitial at (" + str(sx) + ", " + str(sy) + "): " + str(round(start_t, 2)) + " deg C")
+    print("Gradient descent end: (" + str(round(path[-1][0], 2)) + ", " + str(round(path[-1][1], 2)) + ") at " + str(round(final_t, 2)) + " deg C")
+    if best is not None:
+        print("Best placement (< 70 C): (" + str(round(best[0], 2)) + ", " + str(round(best[1], 2)) + ") at " + str(round(best[2], 2)) + " deg C (moved " + str(round(best[3], 2)) + " cm)")
+    else:
+        print("Best placement (< 70 C): No safe position found on the plate.")
     if input("Show descent path plot? (y/n): ").strip().lower() == "y":
-        plots.plot_descent_path(plate, path)
+        b_pt = (best[0], best[1]) if best else None
+        plots.plot_descent_path(plate, path, best_point=b_pt)
 
 # Handles menu option 7 to export summary plate metrics to a file.
 # Inputs: active plate object.

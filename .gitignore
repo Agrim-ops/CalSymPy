@@ -6,3 +6,4 @@ report_*.txt
 report_*.csv
 *.pptx
 study_local/
+.devcontainer/

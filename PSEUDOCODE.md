@@ -75,13 +75,26 @@
    5. Add the new point to the path
 3. Return the path and the temperature at the last point
 
-## 10. Risk level
+## 10. Best placement search (closest safe location)
+1. Check the temperature at the start position (start_x, start_y)
+2. If start temperature is already below the limit (default 70):
+   Return start_x, start_y, start temperature, and distance 0
+3. Set up a grid inside safe margins from 0.2 to L - 0.2
+4. Scan all grid points (x, y) with two loops:
+   1. Find temperature T at (x, y)
+   2. If T < limit:
+      Compute distance from start: sqrt((x - start_x)^2 + (y - start_y)^2)
+      If distance is smaller than best distance so far, save (x, y, T, distance)
+5. If a safe point was found, return its coordinates, temperature and distance
+6. If no point on the plate is below the limit, return None
+
+## 11. Risk level
 1. If temperature is below 70, answer "Low"
 2. Else if temperature is 90 or below, answer "Medium"
 3. Else answer "High"
 (Intel says the maximum junction temperature usually lies between about 100 and 110 degrees C, depending on the product. Our 70 and 90 degree limits are our own rule of thumb with a safety margin.)
 
-## 11. Cooling suggestions
+## 12. Cooling suggestions
 1. Find the risk level of the peak temperature
 2. If Low, add "no action needed" to the list
 3. Else find drop = peak - 69.9, rounded to 1 decimal
@@ -91,7 +104,7 @@
 7. If High, also add: use a heat sink or fan, and move heat-sensitive parts away
 8. Return the list
 
-## 12. Console program
+## 13. Console program
 1. Create a plate with Model A
 2. Repeat until the user chooses 0
 3.    Show the menu and read the choice
@@ -100,5 +113,5 @@
 6.    Choice 3: ask for x, y, check they are inside the plate, print T, gradient and the D test
 7.    Choice 4: hottest point, risk level and suggestions
 8.    Choice 5: average temperature
-9.    Choice 6: gradient descent and optional plot
+9.    Choice 6: gradient descent, best placement search, and optional plot
 10.   Choice 7: save the report to csv or txt

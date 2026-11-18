@@ -59,6 +59,10 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 | **TC-28** | `app.py` | Chip relocation from plate corner $(0.0, 0.0)$ | Clamps inside safe plate margins $[0.2, L-0.2]$ | Clamped to safe margins, cooling achieved | **PASS** |
 | **TC-29** | `app.py` | Chip start position outside plate ($x > L, y > L$) | Display warning banner, avoid invalid steps | Warning displayed, zero crash | **PASS** |
 | **TC-30** | `app.py` | CSV Report Download button | Generates in-memory CSV via pandas | Download button rendered with valid CSV payload | **PASS** |
+| **TC-31** | `calculus.py` | Best placement search from $(1.5, 1.5)$ on Model A | Finds closest point $< 70^\circ\text{C}$ inside margins | Position $(1.46, 1.46)$ at $69.82^\circ\text{C}$, moved $0.0566\text{ cm}$ | **PASS** |
+| **TC-32** | `calculus.py` | Best placement when start already safe $(0.3, 0.3)$ | Returns initial position with distance $0.0$ | Returned $(0.30, 0.30)$ at $28.33^\circ\text{C}$, distance $0.00\text{ cm}$ | **PASS** |
+| **TC-33** | `calculus.py` | Best placement with unreachable `limit=10.0` | Returns `None` without exception | Returned `None` | **PASS** |
+| **TC-34** | `app.py` | Model formulas in expander | Render formulas using `st.latex()` | Clean KaTeX display with zero Markdown italics corruption | **PASS** |
 
 ---
 
@@ -170,6 +174,30 @@ This test report documents the test runs, real failure logs, fixes applied, desi
   - Step 40: $(0.2000, 0.2000) \to 27.3498^\circ\text{C}$
   The first step distance is now $0.1000\text{ cm} < 0.15\text{ cm}$, producing a gradual, physical downhill path.
 - **Status**: Fixed in local commit.
+
+---
+
+### Issue 3: Formula Rendering Glitch in Web Interface Expander
+- **Issue ID**: ISS-01 (Found by Visual Screenshot & Fixed)
+- **Location**: `app.py`, "About the models" expander
+- **Description**: Model formulas in the expander were originally rendered as plain markdown text strings: `T = T_edge + T0 * exp(...)` and `T = T_edge + T0 * sin(...)`. Streamlit's Markdown parser interpreted pairs of `_` and `*` as italic formatting directives, rendering fragments of the mathematical formulas in broken, garbled italics.
+- **Cause**: Using plain text strings in `st.write()` without mathematical formatting delimiters.
+- **Fix**: Replaced plain-text formula strings with `st.latex(r"...")` to render proper mathematical equations using KaTeX without Markdown parsing interference:
+  - Model A: `st.latex(r"T(x,y) = T_{edge} + T_0 \, e^{-\frac{(x-c_x)^2 + (y-c_y)^2}{s}}")`
+  - Model B: `st.latex(r"T(x,y) = T_{edge} + T_0 \sin\left(\frac{\pi x}{L}\right)\sin\left(\frac{\pi y}{L}\right)")`
+- **Re-test Result**: Verified via `AppTest` and web preview that formulas display cleanly in mathematical notation.
+- **Status**: Fixed in local commit.
+
+---
+
+### Issue 4: Flowchart Visual Overlap and Crossing Arrows
+- **Issue ID**: ISS-02 (Found by Visual Inspection & Fixed)
+- **Location**: `study_local/slide_images/workflow_flowchart.png`
+- **Description**: The generated workflow flowchart previously featured connecting arrows that intersected directly across rectangular text boxes, creating visual clutter and unclear flow direction.
+- **Cause**: Inflexible coordinate positioning of bounding boxes relative to arrow endpoints.
+- **Fix**: Redesigned the flowchart as a structured 2x2 grid with dedicated padding inside boxes, clear category titles ("Input and model", "Hand derivatives", "Calculus tools", "Results"), high-contrast backgrounds, and connecting arrows positioned strictly within the blank margins between box borders with descriptive labels ("Derive", "Apply", "Output").
+- **Re-test Result**: Inspected regenerated PNG image directly; verified zero overlap between arrows and text boxes.
+- **Status**: Fixed.
 
 ---
 

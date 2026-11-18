@@ -46,6 +46,7 @@ Default values: T_edge = 20, T0 = 50. The peak is 70 degrees C at (2, 2).
 - Double integral for the average temperature, calculated with a midpoint Riemann sum.
 - Tangent plane (linear approximation) and a degree 2 Taylor polynomial around a point.
 - Gradient descent: a chip is moved step by step in the direction of -gradient so it ends up in a cooler place.
+- Best placement search: finds the closest location inside safe plate margins where temperature is below a safe limit (e.g. 70 degrees C).
 
 All derivatives are worked out by hand and written as formulas in models.py. SymPy is used only in check_with_sympy.py to confirm the hand formulas.
 
@@ -77,7 +78,7 @@ Live link: (add after deployment)
 ## Files
 
 - models.py: the two temperature models, their hand-derived derivatives, and the Plate class
-- calculus.py: gradient, second derivative test, average temperature, tangent plane, Taylor polynomial, gradient descent, hottest point search, risk level, cooling suggestions
+- calculus.py: gradient, second derivative test, average temperature, tangent plane, Taylor polynomial, gradient descent, best placement search, hottest point search, risk level, cooling suggestions
 - plots.py: heat map and gradient descent plots with Matplotlib
 - main.py: console menu
 - app.py: Streamlit web page (a thin layer on top of the same functions)
@@ -116,4 +117,6 @@ NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used 
 | Unrealistic parameter values | User inputs extreme values (e.g. $T_0 = 10,000^\circ\text{C}$ or $T_{\text{edge}} = -500^\circ\text{C}$ below absolute zero) | `app.py` sliders constrain values to reasonable ranges; CLI allows arbitrary floats (except $s, L \le 0$) | Not fixed (limitation) |
 | Idealised models | Real boards have transient conduction, convection, traces, and non-uniform components | Handled as intentional pedagogical simplification; documented in README and app expander that formulas are idealized shapes | Not fixed (limitation) |
 | Web app asleep or offline | Web app is sleeping or network is unavailable | Free apps go to sleep after a period with no visitors and may take a moment to wake up; the console version (`python main.py`) and the Colab notebook work without the web app | Not fixed (limitation) |
+| No safe place on the plate | All plate temperatures exceed threshold limit (e.g. limit=10 C or high T_edge) | `find_best_placement()` returns `None`; both CLI and web app report that no safe position exists | Fixed |
+| Several equally good places | Multiple grid points have identical minimum distance to start position | First encountered point during grid iteration is returned | Handled, with a limitation |
 

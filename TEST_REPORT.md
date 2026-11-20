@@ -15,13 +15,13 @@ This test report documents the test runs, real failure logs, fixes applied, desi
   - Clean virtual environment verified from `requirements.txt`.
 - **Thermal Limits**:
   - Intel says the maximum junction temperature usually lies between about 100 and 110 degrees C, depending on the product. Our 70 and 90 degree limits are our own rule of thumb with a safety margin.
-- **Total Test Cases Executed**: 38 tests across console, numerical integration, boundary conditions, notebook execution, and Streamlit web application.
+- **Total Test Cases Executed**: 39 tests across unified module, numerical integration, boundary conditions, notebook execution, and Streamlit web application.
 - **Initial Test Results**:
   - Passed: 28
   - Failed (Real Bugs & Issues): 2 bugs + 1 gradient descent weakness + 4 numerical and application issues (floating-point Hessian tolerance, non-critical D-test, app slider defaults, open Matplotlib figures).
 - **Bugs & Weaknesses Fixed**: 2 bugs + 1 gradient descent weakness + 4 numerical and application issues (all verified with automated re-tests).
-- **Post-Fix Test Results**: 38 Passed, 0 Failed.
-- **Scope**: Covers the two analytical temperature models (Model A: Gaussian hotspot, Model B: Sine plate), the 8 core multivariable calculus tools, the interactive console interface, and the Streamlit web application.
+- **Post-Fix Test Results**: 39 Passed, 0 Failed.
+- **Scope**: Covers the two analytical temperature models (Model A: Gaussian hotspot, Model B: Sine plate), the 8 core multivariable calculus tools, the interactive console interface, self-checks, and the Streamlit web application.
 
 ---
 
@@ -30,28 +30,28 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 | Test ID | Area | Input / Condition | Expected Behavior | Actual Behavior | Result |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **TC-01** | Environment | Fresh venv from `requirements.txt` | Clean pip install of all 5 libraries | Installed numpy, matplotlib, pandas, sympy, streamlit cleanly | **PASS** |
-| **TC-02** | SymPy Checks | `python check_with_sympy.py` | Off-axis checks match SymPy exact partials | Model A and Model B printed `MATCH` | **PASS** |
-| **TC-03** | Calculus Asserts | `python test_calculus.py` | All asserts pass (gradient, D-test, tangent plane, Taylor, descent) | `All calculus tests passed successfully!` | **PASS** |
-| **TC-04** | `main.py` Option 1 | Model switching: A -> B -> A | Active model and defaults reset properly | Parameters and defaults reset cleanly on switch | **PASS** |
-| **TC-05** | `main.py` Option 1 | Empty Enter on parameter input | Keep current parameter value unchanged | Kept current value without modification | **PASS** |
-| **TC-06** | `main.py` Option 1 | Non-numeric letters in parameter input | Catch `ValueError`, print warning, keep value | `Invalid number. Keeping <current_val>` | **PASS** |
-| **TC-07** | `main.py` Option 1 | Input `s = 0` or `s < 0` for Model A | Validate positive dispersion; prevent division by zero | Initially crashed with `ZeroDivisionError` (see Bug 1); fixed to reject non-positive values | **PASS (Fixed)** |
-| **TC-08** | `main.py` Option 1 | Input `L = 0` or `L < 0` for plate size | Validate positive plate size; prevent division by zero | Initially crashed with `ZeroDivisionError` in Model B; fixed to reject non-positive values | **PASS (Fixed)** |
-| **TC-09** | `main.py` Option 1 | Huge $T_0$ value ($10^9$) | Handled safely using standard float | $T(2, 2) = 1000000025.0^\circ\text{C}$ computed without overflow | **PASS** |
-| **TC-10** | `main.py` Option 3 | Letters input for coordinates | Print `Invalid input coordinates.` and return | Printed message, returned cleanly to menu | **PASS** |
-| **TC-11** | `main.py` Option 3 | Out-of-bounds coordinates ($x=5.0, y=2.0$) | Print error message and return to menu | `Coordinates must be between 0 and 4.0` | **PASS** |
-| **TC-12** | `main.py` Option 3 | Boundary corners $(0, 0)$ and $(L, L)$ | Compute temperature and gradient properly | Evaluated $T(0,0)=26.10^\circ\text{C}$ and $T(4,4)=26.10^\circ\text{C}$ cleanly | **PASS** |
-| **TC-13** | `main.py` Option 4 | Hottest point grid search | Find peak location $(2.0, 2.0)$ and Medium risk | Peak at $(2.0, 2.0)$, $85.0^\circ\text{C}$, Medium risk | **PASS** |
-| **TC-14** | `main.py` Option 5 | Average temperature double integral | Midpoint Riemann sum calculation | Computed $46.47^\circ\text{C}$ | **PASS** |
-| **TC-15** | `main.py` Option 6 | Descent starting at hotspot peak $(2, 2)$ | $\nabla T = [0, 0]$, chip stays at peak | Chip remained at $(2.00, 2.00)$, cooling $0.00^\circ\text{C}$ | **PASS** |
-| **TC-16** | `main.py` Option 6 | Descent starting at corner $(0, 0)$ | Clamped to plate margins $[0.2, L-0.2]$ | Subsequent steps clamped to $x \ge 0.2, y \ge 0.2$ | **PASS** |
-| **TC-17** | `main.py` Option 6 | Descent with huge step size ($1000.0$) | No step escapes the plate boundary | All steps clamped strictly within $[0.2, 3.8]$ | **PASS** |
-| **TC-18** | `main.py` Option 7 | Save report twice (CSV then TXT) | Overwrites / creates files cleanly | Created `report_A.csv` and `report_A.txt` | **PASS** |
-| **TC-19** | `main.py` | Save report when destination is read-only | Catch permission error without crashing | Initially crashed with `PermissionError` (see Bug 2); fixed with `try...except (IOError, OSError)` | **PASS (Fixed)** |
-| **TC-20** | `calculus.py` | Model B D-test where $D \approx 0$ at $(1.0, 1.0)$ | Determinant checked with $|D| < 10^{-6}$ tolerance | $D = -1.14 \times 10^{-13}$, classified as `Inconclusive` | **PASS (Fixed)** |
-| **TC-21** | `calculus.py` | `average_temperature` vs SymPy exact ($n=10$) | Monotonic convergence toward exact integral | Value: $40.431729^\circ\text{C}$, Error: $0.167492^\circ\text{C}$ ($0.42\%$) | **PASS** |
-| **TC-22** | `calculus.py` | `average_temperature` vs SymPy exact ($n=80$) | Higher accuracy midpoint Riemann sum | Value: $40.266841^\circ\text{C}$, Error: $0.002604^\circ\text{C}$ ($0.0065\%$) | **PASS** |
-| **TC-23** | `calculus.py` | `average_temperature` vs SymPy exact ($n=400$) | Asymptotic double integral precision | Value: $40.264341^\circ\text{C}$, Error: $0.000104^\circ\text{C}$ ($0.0003\%$) | **PASS** |
+| **TC-02** | SymPy Checks | `check_sympy()` / `old_checks\check_with_sympy.py` | Off-axis checks match SymPy exact partials | Model A and Model B printed `MATCH` | **PASS** |
+| **TC-03** | Calculus Asserts | `run_checks()` / `old_checks\test_calculus.py` | All asserts pass (gradient, D-test, tangent plane, Taylor, descent) | `All checks passed` / `All calculus tests passed successfully!` | **PASS** |
+| **TC-04** | `calsympy.py` Option 1 | Model switching: A -> B -> A | Active model and defaults reset properly | Parameters and defaults reset cleanly on switch | **PASS** |
+| **TC-05** | `calsympy.py` Option 1 | Empty Enter on parameter input | Keep current parameter value unchanged | Kept current value without modification | **PASS** |
+| **TC-06** | `calsympy.py` Option 1 | Non-numeric letters in parameter input | Catch `ValueError`, print warning, keep value | `Invalid number. Keeping <current_val>` | **PASS** |
+| **TC-07** | `calsympy.py` Option 1 | Input `s = 0` or `s < 0` for Model A | Validate positive dispersion; prevent division by zero | Initially crashed with `ZeroDivisionError` (see Bug 1); fixed to reject non-positive values | **PASS (Fixed)** |
+| **TC-08** | `calsympy.py` Option 1 | Input `L = 0` or `L < 0` for plate size | Validate positive plate size; prevent division by zero | Initially crashed with `ZeroDivisionError` in Model B; fixed to reject non-positive values | **PASS (Fixed)** |
+| **TC-09** | `calsympy.py` Option 1 | Huge $T_0$ value ($10^9$) | Handled safely using standard float | $T(2, 2) = 1000000025.0^\circ\text{C}$ computed without overflow | **PASS** |
+| **TC-10** | `calsympy.py` Option 3 | Letters input for coordinates | Print `Invalid input coordinates.` and return | Printed message, returned cleanly to menu | **PASS** |
+| **TC-11** | `calsympy.py` Option 3 | Out-of-bounds coordinates ($x=5.0, y=2.0$) | Print error message and return to menu | `Coordinates must be between 0 and 4.0` | **PASS** |
+| **TC-12** | `calsympy.py` Option 3 | Boundary corners $(0, 0)$ and $(L, L)$ | Compute temperature and gradient properly | Evaluated $T(0,0)=26.10^\circ\text{C}$ and $T(4,4)=26.10^\circ\text{C}$ cleanly | **PASS** |
+| **TC-13** | `calsympy.py` Option 4 | Hottest point grid search | Find peak location $(2.0, 2.0)$ and Medium risk | Peak at $(2.0, 2.0)$, $85.0^\circ\text{C}$, Medium risk | **PASS** |
+| **TC-14** | `calsympy.py` Option 5 | Average temperature double integral | Midpoint Riemann sum calculation | Computed $46.47^\circ\text{C}$ | **PASS** |
+| **TC-15** | `calsympy.py` Option 6 | Descent starting at hotspot peak $(2, 2)$ | $\nabla T = [0, 0]$, chip stays at peak | Chip remained at $(2.00, 2.00)$, cooling $0.00^\circ\text{C}$ | **PASS** |
+| **TC-16** | `calsympy.py` Option 6 | Descent starting at corner $(0, 0)$ | Clamped to plate margins $[0.2, L-0.2]$ | Subsequent steps clamped to $x \ge 0.2, y \ge 0.2$ | **PASS** |
+| **TC-17** | `calsympy.py` Option 6 | Descent with huge step size ($1000.0$) | No step escapes the plate boundary | All steps clamped strictly within $[0.2, 3.8]$ | **PASS** |
+| **TC-18** | `calsympy.py` Option 7 | Save report twice (CSV then TXT) | Overwrites / creates files cleanly | Created `report_A.csv` and `report_A.txt` | **PASS** |
+| **TC-19** | `calsympy.py` Option 7 | Save report when destination is read-only | Catch permission error without crashing | Initially crashed with `PermissionError` (see Bug 2); fixed with `try...except (IOError, OSError)` | **PASS (Fixed)** |
+| **TC-20** | `calsympy.py` | Model B D-test where $D \approx 0$ at $(1.0, 1.0)$ | Determinant checked with $|D| < 10^{-6}$ tolerance | $D = -1.14 \times 10^{-13}$, classified as `Inconclusive` | **PASS (Fixed)** |
+| **TC-21** | `calsympy.py` | `average_temperature` vs SymPy exact ($n=10$) | Monotonic convergence toward exact integral | Value: $40.431729^\circ\text{C}$, Error: $0.167492^\circ\text{C}$ ($0.42\%$) | **PASS** |
+| **TC-22** | `calsympy.py` | `average_temperature` vs SymPy exact ($n=80$) | Higher accuracy midpoint Riemann sum | Value: $40.266841^\circ\text{C}$, Error: $0.002604^\circ\text{C}$ ($0.0065\%$) | **PASS** |
+| **TC-23** | `calsympy.py` | `average_temperature` vs SymPy exact ($n=400$) | Asymptotic double integral precision | Value: $40.264341^\circ\text{C}$, Error: $0.000104^\circ\text{C}$ ($0.0003\%$) | **PASS** |
 | **TC-24** | Notebook | `notebooks/colab_backup.ipynb` top to bottom | Runs all cells in clean kernel without error | All 9 code cells ran cleanly, plots rendered | **PASS** |
 | **TC-25** | `app.py` | Model switching & parameter customization (A <-> B, negative temperatures) | Reruns top-to-bottom with updated parameters | Models switched and updated without error | **PASS** |
 | **TC-26** | `app.py` | Bad lookup coordinates ($x < 0, x > L, y < 0, y > L$) | Display warning banner, suppress calculus evaluation | Amber warning displayed, zero crash | **PASS** |
@@ -59,14 +59,15 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 | **TC-28** | `app.py` | Chip relocation from plate corner $(0.0, 0.0)$ | Clamps inside safe plate margins $[0.2, L-0.2]$ | Clamped to safe margins, cooling achieved | **PASS** |
 | **TC-29** | `app.py` | Chip start position outside plate ($x > L, y > L$) | Display warning banner, avoid invalid steps | Warning displayed, zero crash | **PASS** |
 | **TC-30** | `app.py` | CSV Report Download button | Generates in-memory CSV via pandas | Download button rendered with valid CSV payload | **PASS** |
-| **TC-31** | `calculus.py` | Best placement search from $(1.5, 1.5)$ on Model A | Finds closest point $< 70^\circ\text{C}$ inside margins | Position $(1.46, 1.46)$ at $69.82^\circ\text{C}$, moved $0.0566\text{ cm}$ | **PASS** |
-| **TC-32** | `calculus.py` | Best placement when start already safe $(0.3, 0.3)$ | Returns initial position with distance $0.0$ | Returned $(0.30, 0.30)$ at $28.33^\circ\text{C}$, distance $0.00\text{ cm}$ | **PASS** |
-| **TC-33** | `calculus.py` | Best placement with unreachable `limit=10.0` | Returns `None` without exception | Returned `None` | **PASS** |
+| **TC-31** | `calsympy.py` | Best placement search from $(1.5, 1.5)$ on Model A | Finds closest point $< 70^\circ\text{C}$ inside margins | Position $(1.46, 1.46)$ at $69.82^\circ\text{C}$, moved $0.0566\text{ cm}$ | **PASS** |
+| **TC-32** | `calsympy.py` | Best placement when start already safe $(0.3, 0.3)$ | Returns initial position with distance $0.0$ | Returned $(0.30, 0.30)$ at $28.33^\circ\text{C}$, distance $0.00\text{ cm}$ | **PASS** |
+| **TC-33** | `calsympy.py` | Best placement with unreachable `limit=10.0` | Returns `None` without exception | Returned `None` | **PASS** |
 | **TC-34** | `app.py` | Model formulas in expander | Render formulas using `st.latex()` | Clean KaTeX display with zero Markdown italics corruption | **PASS** |
-| **TC-35** | `main.py` / `app.py` | Point lookup at non-critical point (Model A at $(3.0, 2.5)$) | $|\nabla T| = 35.91 > 0.01$; suppresses classification and states test does not apply | Displays $D = -257.85$ and note that test does not apply | **PASS (Fixed)** |
-| **TC-36** | `test_calculus.py` | Model B at $(1.0, 1.0)$ assertion | Returns `Inconclusive` | Assertion passes | **PASS** |
-| **TC-37** | `app.py` | Default peak temperatures in sidebar | Model A default $T_{\text{edge}}=25.0$ (peak $85.0^\circ\text{C}$), Model B default $T_{\text{edge}}=20.0$ (peak $70.0^\circ\text{C}$) | Web app defaults match `main.py` and README | **PASS (Fixed)** |
+| **TC-35** | `calsympy.py` / `app.py` | Point lookup at non-critical point (Model A at $(3.0, 2.5)$) | $|\nabla T| = 35.91 > 0.01$; suppresses classification and states test does not apply | Displays $D = -257.85$ and note that test does not apply | **PASS (Fixed)** |
+| **TC-36** | `calsympy.py` | Model B at $(1.0, 1.0)$ assertion | Returns `Inconclusive` | Assertion passes | **PASS** |
+| **TC-37** | `app.py` | Default peak temperatures in sidebar | Model A default $T_{\text{edge}}=25.0$ (peak $85.0^\circ\text{C}$), Model B default $T_{\text{edge}}=20.0$ (peak $70.0^\circ\text{C}$) | Web app defaults match `calsympy.py` and README | **PASS (Fixed)** |
 | **TC-38** | `app.py` | Matplotlib figure cleanup after `st.pyplot` | `plt.close()` called on each figure to prevent memory leak | Zero memory warnings across multiple AppTest runs | **PASS (Fixed)** |
+| **TC-39** | `calsympy.py` Option 8 | Self-check (SymPy and asserts) | Runs all assertions and SymPy checks | Prints MATCH per model and "All checks passed" | **PASS** |
 
 ---
 
@@ -74,7 +75,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 ### Bug 1: Missing Positive Validation for Dimensions and Dispersions in Console Menu
 - **Bug ID**: BUG-01
-- **Location**: `main.py`, `ask_param()`, line 18
+- **Location**: `calsympy.py` (originally `main.py`), `ask_param()`, line 18
 - **Steps to Reproduce**:
   1. Run `python main.py`
   2. Choose Option `1` (Model A)
@@ -121,7 +122,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 ### Bug 2: Unhandled PermissionError on Save Report when Target File is Read-Only
 - **Bug ID**: BUG-02
-- **Location**: `main.py`, `option_save_report()`
+- **Location**: `calsympy.py` (originally `main.py`), `option_save_report()`
 - **Steps to Reproduce**:
   1. Set read-only file permissions on `report_A.csv` (`attrib +r report_A.csv`)
   2. Launch console (`python main.py`)
@@ -157,7 +158,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 ### Design Weakness: Raw Gradient Step Jumping Directly to Boundary Margins
 - **Weakness ID**: DES-01 (Found by Hand Calculation & Fixed)
-- **Location**: `calculus.py`, `gradient_descent()`
+- **Location**: `calsympy.py` (originally `calculus.py`), `gradient_descent()`
 - **Issue Description**: The original implementation stepped proportionally to the raw gradient: `x = x - step_size * Tx`. At the default start $(1.5, 1.5)$ on Model A, the gradient was large ($\nabla T = \langle 22.99, 22.99 \rangle$), causing the first step ($0.08 \times 22.99 \approx 1.84$) to jump past the safe margin directly to $(0.2, 0.2)$ in one single step ($44.38^\circ\text{C}$ drop). Subsequent steps remained pinned to $(0.2, 0.2)$.
 - **Real Trace (Before Fix)**:
   - Step 0: $(1.5000, 1.5000) \to 71.7280^\circ\text{C}$
@@ -207,7 +208,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 ### Issue 5: Floating-Point Roundoff at Model B $(1, 1)$ Causing Erroneous Saddle Point Classification
 - **Issue ID**: ISS-03 (Found by Numerical Evaluation & Fixed)
-- **Location**: `calculus.py`, `second_derivative_test()`
+- **Location**: `calsympy.py` (originally `calculus.py`), `second_derivative_test()`
 - **Description**: At $(1.0, 1.0)$ on Model B, analytical differentiation gives:
   $$T_{xx} = T_{yy} = -50\left(\frac{\pi}{4}\right)^2 \sin\left(\frac{\pi}{4}\right)\sin\left(\frac{\pi}{4}\right) \approx -15.421257$$
   $$T_{xy} = 50\left(\frac{\pi}{4}\right)^2 \cos\left(\frac{\pi}{4}\right)\cos\left(\frac{\pi}{4}\right) \approx 15.421257$$
@@ -223,7 +224,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 ### Issue 6: Misleading Second Derivative Test Classification at Non-Critical Point (Model A at $(3.0, 2.5)$)
 - **Issue ID**: ISS-04 (Found by Numerical Audit & Fixed)
-- **Location**: `main.py` (`option_lookup`), `app.py` ("Check a Point")
+- **Location**: `calsympy.py` (originally `main.py` `option_lookup`), `app.py` ("Check a Point")
 - **Description**: Evaluating Model A at $(3.0, 2.5)$ yields:
   $$T(3.0, 2.5) \approx 57.12^\circ\text{C}, \quad \nabla T = \langle -32.116, -16.058 \rangle, \quad |\nabla T| \approx 35.906\text{ C/cm}$$
   Second partial derivatives evaluate to $T_{xx} = 0.000$, $T_{yy} = -24.087$, $T_{xy} = 16.058$, giving:
@@ -268,7 +269,7 @@ This test report documents the test runs, real failure logs, fixes applied, desi
    - *Behavior*: If the user enters a start position near the extreme boundary (e.g. $x = 0.05 < 0.2$), `path[0]` records the exact initial position $(0.05, 0.05)$, while subsequent steps `path[1:]` are clamped to $[0.2, L-0.2]$.
    - *Reason*: This preserves truthful recording of the chip's actual initial placement while preventing the physical chip from traveling outside safe margins during movement.
 2. **Blocking Console Matplotlib Plots**:
-   - *Behavior*: In `plots.py`, calling `plt.show()` pauses the console until the user closes the figure window.
+   - *Behavior*: In `calsympy.py` (originally `plots.py`), calling `plt.show()` pauses the console until the user closes the figure window.
    - *Reason*: Standard Matplotlib interactive behaviour for console programs. In the Streamlit web app, show=False returns the figure directly.
 
 ---
@@ -277,25 +278,32 @@ This test report documents the test runs, real failure logs, fixes applied, desi
 
 Execute the following commands from PowerShell inside `E:\Study\Projects\calsympy_v2`:
 
-1. **Test Fresh Environment & Symbolic Checks**:
+1. **Test Environment & Automated Self-Checks (Option 8 & Local old_checks)**:
    ```powershell
    .\.venv\Scripts\activate
-   python check_with_sympy.py
-   python test_calculus.py
+   # Run integrated self-checks via Option 8
+   python -c "import calsympy, io, sys; sys.stdin = io.StringIO('8\n0\n'); calsympy.main()"
+
+   # Or execute self-checks directly:
+   python -c "import calsympy; calsympy.run_checks()"
+
+   # Run local regression checks in study_local\old_checks
+   python study_local\old_checks\check_with_sympy.py
+   python study_local\old_checks\test_calculus.py
    ```
 
-2. **Test Boundary & Invalid Parameters in Console (`main.py`)**:
+2. **Test Boundary & Invalid Parameters in Console (`calsympy.py`)**:
    ```powershell
    # Test invalid s=0 (rejected, keeping 2.0)
-   python -c "import main, io, sys; sys.stdin = io.StringIO('1\nA\ny\n\n\n0\n\n\n\n3\n2.0\n2.0\n0\n'); main.main()"
+   python -c "import calsympy, io, sys; sys.stdin = io.StringIO('1\nA\ny\n\n\n0\n\n\n\n3\n2.0\n2.0\n0\n'); calsympy.main()"
 
    # Test invalid L=0 (rejected, keeping 4.0)
-   python -c "import main, io, sys; sys.stdin = io.StringIO('1\nB\ny\n\n\n0\n3\n0.0\n0.0\n0\n'); main.main()"
+   python -c "import calsympy, io, sys; sys.stdin = io.StringIO('1\nB\ny\n\n\n0\n3\n0.0\n0.0\n0\n'); calsympy.main()"
    ```
 
-3. **Test Full Console Menu Cycling**:
+3. **Test Full Console Menu Cycling (`calsympy.py` options 0 to 8)**:
    ```powershell
-   python -c "import main, io, sys; sys.stdin = io.StringIO('1\nB\nn\n1\nA\nn\n3\n2.0\n2.0\n4\n5\n6\n1.5\n1.5\nn\n7\n1\n7\n2\n0\n'); main.main()"
+   python -c "import calsympy, io, sys; sys.stdin = io.StringIO('1\nB\nn\n1\nA\nn\n3\n2.0\n2.0\n4\n5\n6\n1.5\n1.5\nn\n7\n1\n7\n2\n8\n0\n'); calsympy.main()"
    ```
 
 4. **Test Read-Only File Error Handling**:
@@ -303,7 +311,7 @@ Execute the following commands from PowerShell inside `E:\Study\Projects\calsymp
    # Create read-only file and test save
    Set-Content -Path report_A.csv -Value 'locked'
    Set-ItemProperty -Path report_A.csv -Name IsReadOnly -Value $true
-   python -c "import main, io, sys; sys.stdin = io.StringIO('7\n1\n0\n'); main.main()"
+   python -c "import calsympy, io, sys; sys.stdin = io.StringIO('7\n1\n0\n'); calsympy.main()"
    Set-ItemProperty -Path report_A.csv -Name IsReadOnly -Value $false
    Remove-Item report_A.csv
    ```
@@ -321,7 +329,7 @@ Execute the following commands from PowerShell inside `E:\Study\Projects\calsymp
 7. **Test Non-Critical Point and D-Test Tolerance**:
    ```powershell
    # Model A at (3.0, 2.5) -> reports test does not apply
-   python -c "import main, io, sys; sys.stdin = io.StringIO('3\n3.0\n2.5\n0\n'); main.main()"
+   python -c "import calsympy, io, sys; sys.stdin = io.StringIO('3\n3.0\n2.5\n0\n'); calsympy.main()"
    # Model B at (1.0, 1.0) -> returns Inconclusive
-   python -c "import models, calculus; p = models.Plate('B'); print(calculus.second_derivative_test(p, 1.0, 1.0))"
+   python -c "import calsympy; p = calsympy.Plate('B'); print(calsympy.second_derivative_test(p, 1.0, 1.0))"
    ```

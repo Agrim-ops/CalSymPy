@@ -10,14 +10,14 @@ import sympy as sp
 # Inputs: coordinates x, y and hotspot parameters (t_edge, t0, s, cx, cy).
 # Output: temperature value T in degrees C.
 # Formula: T = t_edge + t0 * exp(-((x - cx)^2 + (y - cy)^2) / s).
-def temp_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):
+def temp_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):  # Calculates Model A Gaussian hotspot temperature
     return t_edge + t0 * np.exp(-((x - cx) ** 2 + (y - cy) ** 2) / s)
 
 # Computes analytical first partial derivatives Tx and Ty for Model A.
 # Inputs: coordinates x, y and hotspot parameters.
 # Output: tuple (Tx, Ty) representing the gradient vector.
 # Uses chain rule on exp(-r^2/s) where r^2 = (x - cx)^2 + (y - cy)^2.
-def grad_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):
+def grad_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):  # Computes first partial derivatives (Tx, Ty) for Model A
     # Chain rule on exp(-u): d/dx [r2/s] = 2*(x-cx)/s -> Tx = -2*T0*(x-cx)/s * exp(-r2/s)
     r2 = (x - cx) ** 2 + (y - cy) ** 2
     factor = t0 * np.exp(-r2 / s) * (-2.0 / s)
@@ -27,7 +27,7 @@ def grad_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):
 # Inputs: coordinates x, y and hotspot parameters.
 # Output: tuple (Txx, Tyy, Txy) for the Hessian matrix and D-test.
 # Uses product rule on Tx and Ty to get second derivatives.
-def hessian_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):
+def hessian_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):  # Computes second partial derivatives (Txx, Tyy, Txy) for Model A
     # Product rule on Tx: d/dx [factor * (x-cx)] -> Txx = e*(4*(x-cx)^2/s^2 - 2/s)
     # Mixed partial: d/dy Tx -> Txy = e*(4*(x-cx)*(y-cy)/s^2)
     r2 = (x - cx) ** 2 + (y - cy) ** 2
@@ -41,14 +41,14 @@ def hessian_a(x, y, t_edge=25.0, t0=60.0, s=2.0, cx=2.0, cy=2.0):
 # Inputs: coordinates x, y and parameters t_edge, t0, and plate size L.
 # Output: temperature value T in degrees C.
 # Formula: T = t_edge + t0 * sin(pi * x / L) * sin(pi * y / L).
-def temp_b(x, y, t_edge=20.0, t0=50.0, L=4.0):
+def temp_b(x, y, t_edge=20.0, t0=50.0, L=4.0):  # Calculates Model B sine plate temperature
     return t_edge + t0 * np.sin(np.pi * x / L) * np.sin(np.pi * y / L)
 
 # Computes analytical first partial derivatives Tx and Ty for Model B.
 # Inputs: coordinates x, y and plate parameters (t_edge, t0, L).
 # Output: tuple (Tx, Ty) giving the gradient vector components.
 # Uses chain rule: d/dx sin(pi*x/L) = (pi/L)*cos(pi*x/L).
-def grad_b(x, y, t_edge=20.0, t0=50.0, L=4.0):
+def grad_b(x, y, t_edge=20.0, t0=50.0, L=4.0):  # Computes first partial derivatives (Tx, Ty) for Model B
     # Chain rule: d/dx sin(pi*x/L) = (pi/L)*cos(pi*x/L)
     u, v = np.pi * x / L, np.pi * y / L
     scale = t0 * (np.pi / L)
@@ -58,7 +58,7 @@ def grad_b(x, y, t_edge=20.0, t0=50.0, L=4.0):
 # Inputs: coordinates x, y and plate parameters (t_edge, t0, L).
 # Output: tuple (Txx, Tyy, Txy) for curvature and discriminant D.
 # Differentiates Tx and Ty with respect to x and y.
-def hessian_b(x, y, t_edge=20.0, t0=50.0, L=4.0):
+def hessian_b(x, y, t_edge=20.0, t0=50.0, L=4.0):  # Computes second partial derivatives (Txx, Tyy, Txy) for Model B
     # Second derivative: d/dx cos(pi*x/L) = -(pi/L)*sin(pi*x/L)
     u, v = np.pi * x / L, np.pi * y / L
     factor = t0 * ((np.pi / L) ** 2)
@@ -70,14 +70,14 @@ class Plate:
     # Initializes the square plate instance with default dimensions and model.
     # Inputs: model name string ("A" or "B").
     # Sets default plate size L=4.0 cm and delegates to set_model().
-    def __init__(self, model="A"):
+    def __init__(self, model="A"):  # Initializes plate with default dimensions and model type
         self.L, self.s, self.cx, self.cy = 4.0, 2.0, 2.0, 2.0
         self.set_model(model)
 
     # Configures the active model type and restores default model parameters.
     # Inputs: model name string ("A" for hotspot, "B" for sine plate).
     # Updates plate attributes (t_edge, t0, and s, cx, cy for Model A).
-    def set_model(self, model):
+    def set_model(self, model):  # Sets active model ('A' or 'B') and updates default parameters
         self.model = model
         if model == "A":
             self.t_edge, self.t0, self.s, self.cx, self.cy = 25.0, 60.0, 2.0, 2.0, 2.0
@@ -87,7 +87,7 @@ class Plate:
     # Evaluates plate surface temperature at the specified coordinates.
     # Inputs: x and y coordinates on the plate.
     # Output: temperature T in degrees C dispatched from the active model.
-    def get_temp(self, x, y):
+    def get_temp(self, x, y):  # Evaluates temperature at (x, y) using active model
         if self.model == "A":
             return temp_a(x, y, self.t_edge, self.t0, self.s, self.cx, self.cy)
         return temp_b(x, y, self.t_edge, self.t0, self.L)
@@ -95,7 +95,7 @@ class Plate:
     # Evaluates the gradient vector components at given coordinates.
     # Inputs: x and y coordinates on the plate.
     # Output: tuple (Tx, Ty) dispatched from the active model.
-    def get_grad(self, x, y):
+    def get_grad(self, x, y):  # Evaluates gradient vector (Tx, Ty) at (x, y) using active model
         if self.model == "A":
             return grad_a(x, y, self.t_edge, self.t0, self.s, self.cx, self.cy)
         return grad_b(x, y, self.t_edge, self.t0, self.L)
@@ -103,7 +103,7 @@ class Plate:
     # Evaluates second partial derivatives at given coordinates.
     # Inputs: x and y coordinates on the plate.
     # Output: tuple (Txx, Tyy, Txy) dispatched from the active model.
-    def get_hessian(self, x, y):
+    def get_hessian(self, x, y):  # Evaluates second partials (Txx, Tyy, Txy) at (x, y) using active model
         if self.model == "A":
             return hessian_a(x, y, self.t_edge, self.t0, self.s, self.cx, self.cy)
         return hessian_b(x, y, self.t_edge, self.t0, self.L)
@@ -114,7 +114,7 @@ class Plate:
 # Inputs: plate object and point coordinates (x, y).
 # Outputs: tuple (Tx, Ty, magnitude) where magnitude = sqrt(Tx^2 + Ty^2).
 # The gradient points in the direction of steepest temperature increase.
-def gradient(plate, x, y):
+def gradient(plate, x, y):  # Computes gradient vector and magnitude sqrt(Tx^2 + Ty^2)
     tx, ty = plate.get_grad(x, y)
     return tx, ty, np.sqrt(tx ** 2 + ty ** 2)
 
@@ -122,7 +122,7 @@ def gradient(plate, x, y):
 # Inputs: plate object and coordinates (x, y).
 # Outputs: tuple (Txx, Tyy, Txy, D, classification).
 # Uses discriminant D = Txx * Tyy - Txy^2 to find peaks, valleys, or saddles.
-def second_derivative_test(plate, x, y):
+def second_derivative_test(plate, x, y):  # Classifies critical point curvature using discriminant D = Txx*Tyy - Txy^2
     txx, tyy, txy = plate.get_hessian(x, y)
     d = txx * tyy - (txy ** 2)
     if abs(d) < 1e-6:
@@ -137,7 +137,7 @@ def second_derivative_test(plate, x, y):
 # Inputs: plate object and number of subdivision steps along each axis.
 # Output: average temperature in degrees C over the area [0, L] x [0, L].
 # Approximates (1 / Area) * double_integral(T dA) using a 2D midpoint Riemann sum.
-def average_temperature(plate, n_steps=80):
+def average_temperature(plate, n_steps=80):  # Computes average plate temperature via 2D midpoint Riemann sum
     dx = plate.L / n_steps
     da, total = dx * dx, 0.0
     for i in range(n_steps):
@@ -150,7 +150,7 @@ def average_temperature(plate, n_steps=80):
 # Inputs: plate object, base point (a, b), and evaluation point (x, y).
 # Output: linear approximation temperature L(x, y) in degrees C.
 # Formula: L(x, y) = T(a, b) + Tx * (x - a) + Ty * (y - b).
-def tangent_plane(plate, a, b, x, y):
+def tangent_plane(plate, a, b, x, y):  # Computes linear approximation L(x, y) near base point (a, b)
     tx, ty = plate.get_grad(a, b)
     return plate.get_temp(a, b) + tx * (x - a) + ty * (y - b)
 
@@ -158,7 +158,7 @@ def tangent_plane(plate, a, b, x, y):
 # Inputs: plate object, base point (a, b), and evaluation point (x, y).
 # Output: quadratic temperature estimate including surface curvature.
 # Adds second partial derivative terms 0.5*Txx*dx^2 + Txy*dx*dy + 0.5*Tyy*dy^2.
-def taylor_degree_2(plate, a, b, x, y):
+def taylor_degree_2(plate, a, b, x, y):  # Computes quadratic Taylor polynomial approximation near (a, b)
     tx, ty = plate.get_grad(a, b)
     txx, tyy, txy = plate.get_hessian(a, b)
     dx, dy = x - a, y - b
@@ -169,7 +169,7 @@ def taylor_degree_2(plate, a, b, x, y):
 # Inputs: plate object, starting coordinates, step size, and step count.
 # Outputs: tuple (path list, final temperature).
 # Moves along the unit downhill direction (-Tx/mag, -Ty/mag) with boundary clamping.
-def gradient_descent(plate, start_x, start_y, step_size=0.1, steps=40):
+def gradient_descent(plate, start_x, start_y, step_size=0.1, steps=40):  # Moves chip downhill along unit -grad direction
     curr_x = start_x
     curr_y = start_y
     path = [(curr_x, curr_y)]
@@ -188,7 +188,7 @@ def gradient_descent(plate, start_x, start_y, step_size=0.1, steps=40):
 # Inputs: plate object and number of grid divisions n_grid.
 # Outputs: tuple (best_x, best_y, peak_temperature).
 # Scans coordinates from 0 to L with step dx = L / n_grid to find the peak.
-def find_hottest_point(plate, n_grid=50):
+def find_hottest_point(plate, n_grid=50):  # Scans grid to locate maximum temperature and coordinates
     best_t, best_x, best_y = -1000.0, 0.0, 0.0
     dx = plate.L / n_grid
     for i in range(n_grid + 1):
@@ -203,7 +203,7 @@ def find_hottest_point(plate, n_grid=50):
 # Inputs: temperature value temp in degrees C.
 # Output: risk category string ("Low", "Medium", or "High").
 # Thresholds: Low < 70 C, Medium 70 to 90 C, High > 90 C.
-def get_risk_level(temp):
+def get_risk_level(temp):  # Returns thermal risk level: Low (<70 C), Medium (70-90 C), High (>90 C)
     if temp < 70.0:
         return "Low"
     if temp <= 90.0:
@@ -214,7 +214,7 @@ def get_risk_level(temp):
 # Inputs: peak temperature value peak_temp in degrees C.
 # Output: list of short recommendation strings for cooling.
 # Calculates needed drop to reach 69.9 C and suggests T0, T_edge, or fan options.
-def cooling_suggestions(peak_temp):
+def cooling_suggestions(peak_temp):  # Returns practical cooling recommendations based on peak temperature
     risk = get_risk_level(peak_temp)
     tips = []
     if risk == "Low":
@@ -233,7 +233,7 @@ def cooling_suggestions(peak_temp):
 # Inputs: plate object, start coordinates (start_x, start_y), limit, grid count.
 # Outputs: tuple (x, y, temp, dist) or None if no safe spot exists.
 # Scans inside margins [0.2, L - 0.2] for the nearest point below the threshold.
-def find_best_placement(plate, start_x, start_y, limit=70.0, n_grid=60):
+def find_best_placement(plate, start_x, start_y, limit=70.0, n_grid=60):  # Finds closest safe spot (<limit C) inside margins
     start_t = plate.get_temp(start_x, start_y)
     if start_t < limit:
         return start_x, start_y, start_t, 0.0
@@ -258,7 +258,7 @@ def find_best_placement(plate, start_x, start_y, limit=70.0, n_grid=60):
 # Inputs: plate object, grid resolution n_grid, and boolean flag show.
 # Output: Matplotlib Figure object displaying the heat map.
 # Uses imshow with inferno colormap and overlays white contour lines.
-def plot_heatmap(plate, n_grid=50, show=True):
+def plot_heatmap(plate, n_grid=50, show=True):  # Generates 2D thermal heatmap with contour overlays
     xs = np.linspace(0.0, plate.L, n_grid)
     x_grid, y_grid = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
@@ -277,7 +277,7 @@ def plot_heatmap(plate, n_grid=50, show=True):
 # Inputs: plate object, path coordinate list, grid resolution n_grid, and show flag.
 # Output: Matplotlib Figure object with the path and start/end markers.
 # Draws the background temperature surface and marks path steps from hot to cool.
-def plot_descent_path(plate, path, n_grid=50, show=True, best_point=None):
+def plot_descent_path(plate, path, n_grid=50, show=True, best_point=None):  # Plots downhill cooling path on thermal heatmap
     xs = np.linspace(0.0, plate.L, n_grid)
     x_grid, y_grid = np.meshgrid(xs, xs)
     fig = plt.figure(figsize=(6, 5))
@@ -304,7 +304,7 @@ def plot_descent_path(plate, path, n_grid=50, show=True, best_point=None):
 # Inputs: none.
 # Outputs: none (raises AssertionError if values mismatch).
 # Compares symbolic calculus with hand formulas at off-axis points.
-def check_sympy():
+def check_sympy():  # Verifies hand-derived partial derivatives against SymPy exact calculus
     x, y, te, t0, s, cx, cy, L = sp.symbols("x y te t0 s cx cy L", real=True)
     ta = te + t0 * sp.exp(-((x - cx) ** 2 + (y - cy) ** 2) / s)
     va = {te: 25.0, t0: 60.0, s: 2.0, cx: 2.0, cy: 2.0, x: 3.0, y: 2.5}
@@ -329,7 +329,7 @@ def check_sympy():
 # Inputs: none.
 # Outputs: none (raises AssertionError if check fails).
 # Tests peak temperatures, gradients, Hessian tests, and Taylor polynomial.
-def check_plate_calculus():
+def check_plate_calculus():  # Runs unit tests asserting model values, gradients, D-test, and Taylor polynomials
     pa, pb = Plate("A"), Plate("B")
     assert abs(pa.get_temp(2.0, 2.0) - 85.0) < 1e-4
     tx, ty, mag = gradient(pa, 2.0, 2.0)
@@ -351,7 +351,7 @@ def check_plate_calculus():
 # Inputs: none.
 # Outputs: none (raises AssertionError if check fails).
 # Tests path descent, peak search, risk classification, and cooling advice.
-def check_optimization():
+def check_optimization():  # Runs unit tests asserting gradient descent, peak search, and cooling logic
     pa = Plate("A")
     path, final_t = gradient_descent(pa, 1.5, 1.5)
     assert final_t < pa.get_temp(1.5, 1.5)
@@ -373,7 +373,7 @@ def check_optimization():
 # Inputs: none.
 # Outputs: none (raises AssertionError if any test fails).
 # Executes assertions across models, calculus, optimization, and SymPy comparisons.
-def run_checks():
+def run_checks():  # Master test runner executing calculus assertions and SymPy checks
     print("Running calculus assertions...")
     check_plate_calculus()
     check_optimization()
@@ -387,7 +387,7 @@ def run_checks():
 # Inputs: none.
 # Outputs: none (prints menu list to terminal).
 # Displays choices 0 to 8 for all available program features.
-def show_menu():
+def show_menu():  # Displays the numbered menu choices (0 to 8) in the terminal
     print("\n--- CalSymPy Menu ---")
     print("1. Model & params\n2. Heat map\n3. Point lookup\n4. Hottest point\n5. Average temp\n6. Gradient descent\n7. Save report\n8. Self-check (SymPy and asserts)\n0. Quit")
 
@@ -395,7 +395,7 @@ def show_menu():
 # Inputs: parameter name string and current default value.
 # Output: updated float value, or current value if input is empty/invalid.
 # Enforces strictly positive values for plate size L and hotspot width s.
-def ask_param(name, current_val):
+def ask_param(name, current_val):  # Safely prompts for numeric parameter with positive bounds validation
     val = input("Enter " + name + " (current " + str(current_val) + "): ").strip()
     if val == "":
         return current_val
@@ -413,7 +413,7 @@ def ask_param(name, current_val):
 # Inputs: active plate object.
 # Outputs: none (modifies plate attributes in place).
 # Lets user switch between Model A and Model B and update parameters.
-def option_choose_model(plate):
+def option_choose_model(plate):  # Console Option 1: switch model type and adjust parameters
     print("\nCurrent model is:", plate.model)
     m = input("Choose model (A: single hotspot, B: sine plate): ").strip().upper()
     if m in ["A", "B"]:
@@ -432,7 +432,7 @@ def option_choose_model(plate):
 # Inputs: active plate object.
 # Outputs: none (prints point metrics and D-test classification).
 # Validates bounds (0 to L) and computes T, gradient, Hessian, and D.
-def option_lookup(plate):
+def option_lookup(plate):  # Console Option 3: evaluate point temperature, gradient, and second partials
     try:
         x_in = float(input("Enter x coordinate (0 to " + str(plate.L) + "): ").strip())
         y_in = float(input("Enter y coordinate (0 to " + str(plate.L) + "): ").strip())
@@ -459,7 +459,7 @@ def option_lookup(plate):
 # Inputs: active plate object.
 # Outputs: none (prints peak coordinates, risk level, and suggestions).
 # Uses grid search to find the hotspot and outputs rules-of-thumb advice.
-def option_hottest(plate):
+def option_hottest(plate):  # Console Option 4: find hottest point, risk level, and cooling suggestions
     print("\nSearching grid for hottest point...")
     hx, hy, ht = find_hottest_point(plate, n_grid=60)
     print("Hottest point is at x = " + str(round(hx, 2)) + " cm, y = " + str(round(hy, 2)) + " cm")
@@ -473,7 +473,7 @@ def option_hottest(plate):
 # Inputs: active plate object.
 # Outputs: none (prints estimated average temperature).
 # Evaluates a 2D midpoint Riemann sum over [0, L] x [0, L].
-def option_average(plate):
+def option_average(plate):  # Console Option 5: calculate average plate temperature via Riemann sum
     print("\nCalculating double integral Riemann sum...")
     avg = average_temperature(plate, n_steps=80)
     print("Average plate temperature: " + str(round(avg, 2)) + " deg C")
@@ -482,7 +482,7 @@ def option_average(plate):
 # Inputs: active plate object.
 # Outputs: none (prints trajectory and optionally plots path).
 # Compares unit-step gradient descent against the closest safe placement.
-def option_descent(plate):
+def option_descent(plate):  # Console Option 6: simulate chip relocation via gradient descent and best placement
     try:
         val_x = input("Enter initial chip x (default 1.5): ").strip()
         val_y = input("Enter initial chip y (default 1.5): ").strip()
@@ -511,7 +511,7 @@ def option_descent(plate):
 # Inputs: active plate object.
 # Outputs: none (writes a CSV or text file to local disk).
 # Exports peak coordinates, risk level, and average temperature with error handling.
-def option_save_report(plate):
+def option_save_report(plate):  # Console Option 7: export plate metrics to CSV or text file
     hx, hy, ht = find_hottest_point(plate, n_grid=50)
     avg_t = average_temperature(plate, n_steps=60)
     metrics = ["Model", "Peak_X", "Peak_Y", "Peak_Temp", "Risk_Level", "Average_Temp"]
@@ -533,7 +533,7 @@ def option_save_report(plate):
 # Inputs: none.
 # Outputs: none (runs interactive loop until choice 0 is entered).
 # Initializes a Plate object and routes commands to option functions.
-def main():
+def main():  # Main interactive loop running the console application until quit
     plate = Plate("A")
     print("Welcome to CalSymPy (MAT 112 Engineering Mathematics & Python)")
     choice = ""

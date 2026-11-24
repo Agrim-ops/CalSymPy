@@ -9,22 +9,97 @@
 
 ## Table of Contents
 
-1. [Architectural Overview & Complexity Summary](#1-architectural-overview--complexity-summary)
-2. [Algorithm 1: Thermal Surface Evaluation (Models A & B)](#algorithm-1-thermal-surface-evaluation-models-a--b)
-3. [Algorithm 2: First Partial Derivatives & Gradient Vector](#algorithm-2-first-partial-derivatives--gradient-vector)
-4. [Algorithm 3: Second Partial Derivatives & Hessian Matrix](#algorithm-3-second-partial-derivatives--hessian-matrix)
-5. [Algorithm 4: Second Derivative Test & Critical Point Classification](#algorithm-4-second-derivative-test--critical-point-classification)
-6. [Algorithm 5: 2D Midpoint Riemann Sum Double Integral](#algorithm-5-2d-midpoint-riemann-sum-double-integral)
-7. [Algorithm 6: Multivariable Taylor Approximations (Degrees 1 & 2)](#algorithm-6-multivariable-taylor-approximations-degrees-1--2)
-8. [Algorithm 7: Normalized Downhill Gradient Descent with Margin Clamping](#algorithm-7-normalized-downhill-gradient-descent-with-margin-clamping)
-9. [Algorithm 8: Global Grid Search for Peak Temperature](#algorithm-8-global-grid-search-for-peak-temperature)
-10. [Algorithm 9: Constrained Safe Component Relocation](#algorithm-9-constrained-safe-component-relocation)
-11. [Algorithm 10: Thermal Risk Assessment & Cooling Advisor](#algorithm-10-thermal-risk-assessment--cooling-advisor)
-12. [Algorithm 11: Symbolic Differentiation & Lambdification Pipeline](#algorithm-11-symbolic-differentiation--lambdification-pipeline)
+1. [Slide-Ready Unified Master Algorithm & Pseudocode](#1-slide-ready-unified-master-algorithm--pseudocode) *(For PPT Presentations)*
+2. [Architectural Overview & Complexity Summary](#2-architectural-overview--complexity-summary)
+3. [Algorithm 1: Thermal Surface Evaluation (Models A & B)](#algorithm-1-thermal-surface-evaluation-models-a--b)
+4. [Algorithm 2: First Partial Derivatives & Gradient Vector](#algorithm-2-first-partial-derivatives--gradient-vector)
+5. [Algorithm 3: Second Partial Derivatives & Hessian Matrix](#algorithm-3-second-partial-derivatives--hessian-matrix)
+6. [Algorithm 4: Second Derivative Test & Critical Point Classification](#algorithm-4-second-derivative-test--critical-point-classification)
+7. [Algorithm 5: 2D Midpoint Riemann Sum Double Integral](#algorithm-5-2d-midpoint-riemann-sum-double-integral)
+8. [Algorithm 6: Multivariable Taylor Approximations (Degrees 1 & 2)](#algorithm-6-multivariable-taylor-approximations-degrees-1--2)
+9. [Algorithm 7: Normalized Downhill Gradient Descent with Margin Clamping](#algorithm-7-normalized-downhill-gradient-descent-with-margin-clamping)
+10. [Algorithm 8: Global Grid Search for Peak Temperature](#algorithm-8-global-grid-search-for-peak-temperature)
+11. [Algorithm 9: Constrained Safe Component Relocation](#algorithm-9-constrained-safe-component-relocation)
+12. [Algorithm 10: Thermal Risk Assessment & Cooling Advisor](#algorithm-10-thermal-risk-assessment--cooling-advisor)
+13. [Algorithm 11: Symbolic Differentiation & Lambdification Pipeline](#algorithm-11-symbolic-differentiation--lambdification-pipeline)
 
 ---
 
-## 1. Architectural Overview & Complexity Summary
+## 1. Slide-Ready Unified Master Algorithm & Pseudocode
+
+> [!TIP]
+> **For PPT Presentation Slides**: Copy and paste the unified algorithm box below directly into your presentation slide. It covers the complete end-to-end architecture in 5 modular stages.
+
+### Master Pseudocode: CalSymPy End-to-End Pipeline
+
+```text
+ALGORITHM CalSymPy_MasterPipeline
+========================================================================================
+INPUT:
+    model: Selection in {"A", "B"}
+    L: Board side length (4.0 cm)
+    params: (T_edge, T0, s, cx, cy)
+    chip_pos: Initial overheated component coordinate (x0, y0)
+OUTPUT:
+    T_avg, Peak_Info, Risk_Level, Descent_Path, Safe_Placement
+
+----------------------------------------------------------------------------------------
+STAGE 1: [Thermal Modeling - Temperature Function T(x, y)]
+    IF model == "A" THEN  // Gaussian Hotspot
+        T(x, y) <- T_edge + T0 * EXP( -((x - cx)^2 + (y - cy)^2) / s )
+    ELSE                  // Sinusoidal Standing Wave
+        T(x, y) <- T_edge + T0 * SIN(pi * x / L) * SIN(pi * y / L)
+    END IF
+
+----------------------------------------------------------------------------------------
+STAGE 2: [Calculus & Critical Point Classification]
+    Tx <- d/dx[ T(x, y) ],   Ty <- d/dy[ T(x, y) ]            // First partials
+    grad_T <- <Tx, Ty>,      ||grad_T|| <- SQRT( Tx^2 + Ty^2 ) // Gradient vector & magnitude
+    Txx <- d2/dx2[ T ],      Tyy <- d2/dy2[ T ],   Txy <- d2/dxdy[ T ] // Hessian matrix
+    D <- (Txx * Tyy) - (Txy^2)                                // Discriminant
+    
+    IF ||grad_T|| < 0.01 THEN                                 // Critical point check
+        IF ABS(D) < 1e-6 THEN Class <- "Inconclusive"
+        ELSE IF D < 0    THEN Class <- "Saddle Point"
+        ELSE IF Txx < 0  THEN Class <- "Local Maximum"
+        ELSE                  Class <- "Local Minimum"
+    END IF
+
+----------------------------------------------------------------------------------------
+STAGE 3: [Spatial Integration - 2D Midpoint Riemann Sum]
+    Divide plate [0, L] x [0, L] into N x N cells (dx <- L / N)
+    T_avg <- (1 / L^2) * SUM[i=0..N-1, j=0..N-1] T((i+0.5)*dx, (j+0.5)*dx) * (dx^2)
+
+----------------------------------------------------------------------------------------
+STAGE 4: [Thermal Risk & Mitigation]
+    Locate peak (hx, hy) on grid where T(hx, hy) is maximized
+    IF Peak < 70 C THEN Risk <- "Low" 
+    ELSE IF Peak <= 90 C THEN Risk <- "Medium" ELSE Risk <- "High"
+    drop <- Peak - 69.9 C -> Suggest power reduction T0 or edge cooling T_edge
+
+----------------------------------------------------------------------------------------
+STAGE 5: [Downhill Relocation & Safe Placement]
+    // 5a. Gradient Descent (Rolling downhill away from heat)
+    FOR step = 1 TO MaxSteps (40) DO
+        IF ||grad_T|| > 0 THEN
+            (x, y) <- (x, y) - step_size * (grad_T / ||grad_T||)
+        END IF
+        (x, y) <- CLAMP( (x, y), [0.2, L - 0.2] )  // Safety boundary margin
+        Append (x, y) to Descent_Path
+    END FOR
+
+    // 5b. Constrained Optimal Placement
+    Find (x*, y*) minimizing SQRT((x - x0)^2 + (y - y0)^2)
+        subject to: T(x*, y*) < 70.0 C  AND  0.2 <= x, y <= L - 0.2
+
+RETURN T_avg, (hx, hy, Peak), Risk, Descent_Path, (x*, y*)
+========================================================================================
+END ALGORITHM
+```
+
+---
+
+## 2. Architectural Overview & Complexity Summary
 
 CalSymPy models two-dimensional steady-state heat distribution on a square circuit board of side length $L = 4.0\text{ cm}$ spanning $[0, L] \times [0, L]$.
 

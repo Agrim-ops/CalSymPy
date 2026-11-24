@@ -48,7 +48,7 @@ Default values: T_edge = 20, T0 = 50. The peak is 70 degrees C at (2, 2).
 - Gradient descent: a chip is moved step by step in the direction of -gradient so it ends up in a cooler place.
 - Best placement search: finds the closest location inside safe plate margins where temperature is below a safe limit (e.g. 70 degrees C).
 
-All derivatives are worked out by hand and written as formulas in calsympy.py. SymPy is used in check_sympy() (menu option 8) to confirm the hand formulas.
+SymPy differentiates both temperature models symbolically (`sp.diff`) and `sp.lambdify` compiles $T, T_x, T_y, T_{xx}, T_{yy},$ and $T_{xy}$ into NumPy functions cached in `st.session_state["funcs"]` inside `app.py`.
 
 ## Risk level and cooling suggestions
 
@@ -60,27 +60,24 @@ Install the libraries:
 
     pip install -r requirements.txt
 
-Console version:
-
-    python calsympy.py
-
-Web version:
+Run the web app:
 
     streamlit run app.py
 
 ## Files
 
-- calsympy.py: core engine containing plate models, analytical derivatives, calculus tools, and thermal optimization
-- app.py: interactive Streamlit web application with SymPy derivative compilation and heat map visualization
-- functions.md: comprehensive reference guide explaining all functions and mathematics in plain, intuitive terms
+- app.py: single self-contained file containing SymPy model compilation, `Plate` class, calculus tools, optimization, and the Streamlit web UI
+- functions.md: reference guide explaining all functions and mathematics in plain, intuitive terms
 - PSEUDOCODE.md: formal algorithm specifications, pseudocode, and time/space complexity analysis
-- requirements.txt: list of required Python packages (numpy, matplotlib, pandas, sympy, streamlit)
+- blocked_pseudocode.md: slide-ready blocked pseudocode
+- FLOWCHART.md: algorithm flowchart diagrams
+- requirements.txt: list of required Python packages (`numpy`, `matplotlib`, `pandas`, `sympy`, `streamlit`)
 - README.md: project overview, models, calculus formulas, and usage guide
 - .gitignore: specifies untracked files
 
 ## Libraries
 
-NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used only for the web page.
+NumPy, Matplotlib, Pandas, SymPy, and Streamlit are used in `app.py`.
 
 ## Limitations
 
@@ -93,20 +90,20 @@ NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used 
 
 | Case | What could go wrong | What we did | Status |
 | --- | --- | --- | --- |
-| s or L = 0 | Division by zero in formulas (`1/s` or `pi/L`) causing `ZeroDivisionError` | `ask_param()` in `calsympy.py` rejects inputs `<= 0` and keeps current value; `app.py` sliders enforce `min_value=0.1` for `s` and `min_value=1.0` for `L` | Fixed |
-| Letters or empty input | Program crashes with `ValueError` when converting strings to `float` | `ask_param()` catches `ValueError` and falls back to default; empty inputs keep current value; coordinates check catches invalid strings | Fixed |
-| Point outside the plate | Point lookup computes out-of-bounds temperatures beyond the physical plate boundary $[0, L] \times [0, L]$ | `option_lookup()` in `calsympy.py` checks `0 <= x, y <= L` and prints warning; `app.py` displays warning banner | Fixed |
-| Read-only report file | Saving report raises `PermissionError` (subclass of `OSError`) if destination file is locked or read-only | `option_save_report()` in `calsympy.py` wraps file writes in `try ... except (IOError, OSError)` and displays friendly error message | Fixed |
-| D = 0 | Second derivative test cannot determine if a critical point is an extremum or saddle point; floating-point roundoff can yield tiny negative values (e.g. $D \approx -1.1 \times 10^{-13}$ on Model B at $(1, 1)$) falsely reporting "Saddle Point" | `second_derivative_test()` checks `abs(d) < 1e-6` first and returns `"Inconclusive"` | Fixed |
-| D-test at non-critical point | Second derivative test only applies at critical points where the gradient is zero; at non-critical points (e.g. Model A at $(3, 2.5)$ where $|\nabla T| \approx 35.91\text{ C/cm}$), evaluating $D$ gives a mathematically invalid classification (such as "Saddle Point") | `calsympy.py` and `app.py` check if gradient magnitude $> 0.01$; if non-zero, they display $D$ but state the second derivative test does not apply here | Fixed |
-| Chip starting at the peak | Chip is already at local maximum where gradient $\nabla T = \langle 0, 0 \rangle$, so magnitude is 0 and descent cannot find a downhill direction | In `gradient_descent()` the magnitude check `if mag > 0.0:` keeps the chip stationary; default start is set away from center $(1.5, 1.5)$ | Not fixed (limitation) |
-| Large gradient descent step | A huge step size could overshoot or throw coordinates far off the plate | Each step moves along the unit downhill vector and coordinates are clamped to safe plate margins $[0.2, L - 0.2]$ on every step | Fixed |
-| Few Riemann sum steps | Small `n_steps` (e.g. 2 or 5) produces coarse Riemann sum discretization error | Default `n_steps` is set to 80 ($80 \times 80 = 6,400$ midpoints), converging within $< 0.01^\circ\text{C}$ of continuous integral | Not fixed (limitation) |
-| Grid-search hottest point accuracy | True peak location falls between discrete grid points, slightly underestimating peak temperature | Grid resolution defaults to $50 \times 50$ or $60 \times 60$ ($dx \approx 0.067\text{ cm}$), keeping error within $\sim 0.1^\circ\text{C}$; theoretical peak is known analytically | Not fixed (limitation) |
-| Gradient descent stopping at plate margin | Downhill descent pushes chip into boundary margin $[0.2, L - 0.2]$, causing repeated stationary steps | Clamping keeps the chip inside safe margins $[0.2, L - 0.2]$, but the chip stops at the margin and does not search beyond it | Handled, with a limitation |
-| Unrealistic parameter values | User inputs extreme values (e.g. $T_0 = 10,000^\circ\text{C}$ or $T_{\text{edge}} = -500^\circ\text{C}$ below absolute zero) | `app.py` sliders constrain values to reasonable ranges; CLI allows arbitrary floats (except $s, L \le 0$) | Not fixed (limitation) |
-| Idealised models | Real boards have transient conduction, convection, traces, and non-uniform components | Handled as intentional pedagogical simplification; documented in README and app expander that formulas are idealized shapes | Not fixed (limitation) |
-| Web app asleep or offline | Web app is sleeping or network is unavailable | Free apps go to sleep after a period with no visitors and may take a moment to wake up; the console version (`python calsympy.py`) works offline without the web app | Not fixed (limitation) |
-| No safe place on the plate | All plate temperatures exceed threshold limit (e.g. limit=10 C or high T_edge) | `find_best_placement()` returns `None`; both CLI and web app report that no safe position exists | Fixed |
-| Several equally good places | Multiple grid points have identical minimum distance to start position | First encountered point during grid iteration is returned | Handled, with a limitation |
+| s or L = 0 | Division by zero in formulas (`1/s` or `pi/L`) causing `ZeroDivisionError` | `app.py` sliders enforce `min_value=0.1` for `s` and `1.0` for `L` | Fixed |
+| Letters or empty input | Crash if non-numeric input is passed | `app.py` uses Streamlit `slider` and `number_input` widgets so invalid strings cannot be entered | Fixed |
+| Point outside the plate | Point lookup computes out-of-bounds coordinates beyond $[0, L] \times [0, L]$ | `app.py` checks `0 <= px <= L and 0 <= py <= L` (and chip start coordinates) and shows `st.warning(...)` | Fixed |
+| Report file write error | Local file writes could fail on read-only paths | `app.py` exports the CSV directly in browser via `st.download_button(...)` | Fixed |
+| D = 0 | Second derivative test cannot determine if a critical point is an extremum or saddle point; floating-point roundoff can yield tiny values falsely reporting "Saddle Point" | `second_derivative_test()` checks `abs(d) < 1e-6` first and returns `"Inconclusive"` | Fixed |
+| D-test at non-critical point | Second derivative test only applies at critical points where gradient is zero | `app.py` checks `if mag < 0.01`; if non-zero, it prints $D$ with `(not a critical point, so the D test does not apply)` | Fixed |
+| Chip starting at the peak | Gradient $\nabla T = \langle 0, 0 \rangle$ at peak, so magnitude is 0 | In `gradient_descent()` the check `if mag > 0:` keeps the chip stationary; default chip start is `(1.5, 1.5)` | Not fixed (limitation) |
+| Large gradient descent step | Huge step size could overshoot or leave the plate | Each step moves along unit downhill direction (`step=0.1`) and clamps coordinates to `[0.2, plate.L - 0.2]` | Fixed |
+| Few Riemann sum steps | Small grid `n` produces coarse discretization error | Default `n=80` (`80 x 80 = 6,400` midpoints) in `average_temperature(plate, n=80)` | Not fixed (limitation) |
+| Grid-search hottest point accuracy | True peak can fall between discrete grid points | Grid defaults to `n=50` in `find_hottest_point` and `n=60` in `find_best_placement` | Not fixed (limitation) |
+| Gradient descent stopping at plate margin | Downhill descent pushes chip into boundary `[0.2, L - 0.2]` | Clamping keeps the chip inside safe margins `[0.2, L - 0.2]`, stopping at the border | Handled, with a limitation |
+| Unrealistic parameter values | Extreme temperatures or dimensions | `app.py` sidebar sliders constrain `L` (`1.0..10.0`), `T_edge` (`0.0..50.0`), `T0` (`0.0..150.0`), `s` (`0.1..10.0`), `cx`/`cy` (`0.0..L`) | Handled |
+| Idealised models | Real boards have transient conduction, convection, traces, and non-uniform components | Documented in `README.md` and the app expander that formulas are idealized shapes | Not fixed (limitation) |
+| Web app asleep or offline | Hosted web app is sleeping or network is unavailable | Free hosted apps sleep after inactivity; running `streamlit run app.py` locally works offline | Not fixed (limitation) |
+| No safe place on the plate | All grid points exceed `limit=70.0` C | `find_best_placement()` returns `None`; `app.py` prints `Best placement below 70 C: none on this plate` | Fixed |
+| Several equally good places | Multiple grid points have identical minimum distance to start | First encountered grid point minimizing distance (`dist < best[3]`) is returned | Handled, with a limitation |
 

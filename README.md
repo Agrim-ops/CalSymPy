@@ -73,6 +73,7 @@ Web version:
 - calsympy.py: core engine containing plate models, analytical derivatives, calculus tools, and thermal optimization
 - app.py: interactive Streamlit web application with SymPy derivative compilation and heat map visualization
 - functions.md: comprehensive reference guide explaining all functions and mathematics in plain, intuitive terms
+- PSEUDOCODE.md: formal algorithm specifications, pseudocode, and time/space complexity analysis
 - requirements.txt: list of required Python packages (numpy, matplotlib, pandas, sympy, streamlit)
 - README.md: project overview, models, calculus formulas, and usage guide
 - .gitignore: specifies untracked files

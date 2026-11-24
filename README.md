@@ -68,27 +68,14 @@ Web version:
 
     streamlit run app.py
 
-Checks (SymPy and assert tests):
-
-    python calsympy.py
-    (choose option 8: Self-check)
-
-Or run the self-checks directly:
-
-    python -c "import calsympy; calsympy.run_checks()"
-
-Live link: (add after deployment)
-
 ## Files
 
-- calsympy.py: single unified file containing temperature models, hand derivatives, calculus tools, plots, self-checks, and console menu
-- app.py: Streamlit web page (a thin layer on top of calsympy.py)
-- requirements.txt: list of required Python packages
+- calsympy.py: core engine containing plate models, analytical derivatives, calculus tools, and thermal optimization
+- app.py: interactive Streamlit web application with SymPy derivative compilation and heat map visualization
+- functions.md: comprehensive reference guide explaining all functions and mathematics in plain, intuitive terms
+- requirements.txt: list of required Python packages (numpy, matplotlib, pandas, sympy, streamlit)
+- README.md: project overview, models, calculus formulas, and usage guide
 - .gitignore: specifies untracked files
-- PSEUDOCODE.md: pseudo-code for the main algorithms
-- TEST_REPORT.md: tests we ran and the bugs found and fixed
-- DEPLOY.md: how the web app was deployed
-- notebooks/colab_backup.ipynb: backup copy that runs on Google Colab
 
 ## Libraries
 
@@ -118,7 +105,7 @@ NumPy, Matplotlib, Pandas and SymPy are used for the project. Streamlit is used 
 | Gradient descent stopping at plate margin | Downhill descent pushes chip into boundary margin $[0.2, L - 0.2]$, causing repeated stationary steps | Clamping keeps the chip inside safe margins $[0.2, L - 0.2]$, but the chip stops at the margin and does not search beyond it | Handled, with a limitation |
 | Unrealistic parameter values | User inputs extreme values (e.g. $T_0 = 10,000^\circ\text{C}$ or $T_{\text{edge}} = -500^\circ\text{C}$ below absolute zero) | `app.py` sliders constrain values to reasonable ranges; CLI allows arbitrary floats (except $s, L \le 0$) | Not fixed (limitation) |
 | Idealised models | Real boards have transient conduction, convection, traces, and non-uniform components | Handled as intentional pedagogical simplification; documented in README and app expander that formulas are idealized shapes | Not fixed (limitation) |
-| Web app asleep or offline | Web app is sleeping or network is unavailable | Free apps go to sleep after a period with no visitors and may take a moment to wake up; the console version (`python calsympy.py`) and the Colab notebook work without the web app | Not fixed (limitation) |
+| Web app asleep or offline | Web app is sleeping or network is unavailable | Free apps go to sleep after a period with no visitors and may take a moment to wake up; the console version (`python calsympy.py`) works offline without the web app | Not fixed (limitation) |
 | No safe place on the plate | All plate temperatures exceed threshold limit (e.g. limit=10 C or high T_edge) | `find_best_placement()` returns `None`; both CLI and web app report that no safe position exists | Fixed |
 | Several equally good places | Multiple grid points have identical minimum distance to start position | First encountered point during grid iteration is returned | Handled, with a limitation |
 
